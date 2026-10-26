@@ -1,0 +1,87 @@
+# Mirrors the skill prized.dev publishes into skills/ (see .github/scripts/sync_skill.py).
+# The skill is edited in prized-dev/doppel; after a change deploys, this picks it up
+# within the hour, or at once with: gh workflow run sync-skill.yml -R prized-dev/skills
+name: Sync skill from prized.dev
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+  repository_dispatch:
+    types: [skill-updated]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-skill
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false # the write token only reaches the push below
+
+      - name: Mirror the published skill
+        id: sync
+        run: python3 .github/scripts/sync_skill.py
+
+      - name: Validate the plugin
+        if: steps.sync.outputs.changed != ''
+        run: npx -y @anthropic-ai/claude-code@2.1.310 plugin validate --strict .
+
+      - name: Commit and push
+        if: steps.sync.outputs.changed != ''
+        env:
+          CHANGED: ${{ steps.sync.outputs.changed }}
+          VERSION: ${{ steps.sync.outputs.version }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          git add -A skills .github/skills-source.json
+          for m in .claude-plugin/plugin.json plugin.json .codex-plugin/plugin.json; do
+            if [ -f "$m" ]; then git add "$m"; fi
+          done
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Sync from prized.dev: $CHANGED" -m "Plugin version $VERSION."
+          auth=$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader \
+            GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth" git push origin HEAD:main
+
+  # GitHub turns off scheduled workflows in a public repo after 60 days without
+  # activity. A dated file after 50 quiet days keeps this one on, even when the
+  # sync job fails (prized.dev down, or the skill held back).
+  keepalive:
+    needs: sync
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main # after the sync job's push, if any
+          persist-credentials: false
+
+      - name: Commit a heartbeat after 50 quiet days
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          idle=$(( $(date +%s) - $(git log -1 --format=%ct) ))
+          if [ "$idle" -le $(( 50 * 86400 )) ]; then
+            echo "Last commit $(( idle / 86400 )) days ago; nothing to do."
+            exit 0
+          fi
+          date -u +%F > .github/heartbeat
+          git add .github/heartbeat
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Keep the hourly skill sync enabled" -m "No commit in 50 days; GitHub disables idle schedules at 60."
+          auth=$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader \
+            GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth" git push origin HEAD:main

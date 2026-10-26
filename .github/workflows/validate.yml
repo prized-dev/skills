@@ -1,0 +1,42 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Pull requests leave skills/ alone
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          touched=$(git diff --name-only "origin/$BASE_REF...HEAD" -- skills .github/skills-source.json)
+          if [ -n "$touched" ]; then
+            echo "::error::skills/ is a copy of https://prized.dev/SKILL.md and is overwritten every hour. Open an issue or email team@prized.dev with the change instead."
+            echo "$touched"
+            exit 1
+          fi
+
+      - name: Sync script tests
+        run: python3 -m unittest discover -s .github/scripts
+
+      - name: Claude Code plugin and marketplace
+        run: npx -y @anthropic-ai/claude-code@2.1.310 plugin validate --strict .
+
+      # Informational: prized.dev can be ahead of this repo until the next hourly sync.
+      - name: skills/ matches prized.dev
+        continue-on-error: true
+        run: python3 .github/scripts/sync_skill.py --check

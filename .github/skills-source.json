@@ -1,0 +1,15 @@
+{
+  "site": "https://prized.dev",
+  "note": "Written by .github/scripts/sync_skill.py. Edit the skill in prized-dev/doppel, not here.",
+  "skills": {
+    "prized-sandboxes": {
+      "digest": "sha256:25a26aa210e4c7ac1c153ca430a9b20bdb7c0b3e7f8a1f7d99f32ab91a0b6dd4",
+      "files": [
+        "SKILL.md",
+        "scripts/prized-e2b.ts",
+        "scripts/prized_e2b.py",
+        "scripts/prized_sandbox.py"
+      ]
+    }
+  }
+}

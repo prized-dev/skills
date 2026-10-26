@@ -1,0 +1,18 @@
+{
+  "name": "prized",
+  "description": "Prized's skills for coding agents.",
+  "owner": {
+    "name": "Prized",
+    "email": "team@prized.dev",
+    "url": "https://prized.dev"
+  },
+  "plugins": [
+    {
+      "name": "prized",
+      "source": "./",
+      "description": "Run code, shell commands and coding agents in Prized Sandboxes, Linux microVMs your agent creates, runs commands in, forks and deletes over HTTPS or the prized CLI.",
+      "category": "development",
+      "tags": ["sandbox", "microvm", "code-execution", "agents"]
+    }
+  ]
+}
