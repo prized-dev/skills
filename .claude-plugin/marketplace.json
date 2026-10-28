@@ -1,6 +1,6 @@
 {
   "name": "prized",
-  "description": "Prized's skills for coding agents.",
+  "description": "Prized's plugin for coding agents: the Prized Sandboxes skill, MCP server and commands.",
   "owner": {
     "name": "Prized",
     "email": "team@prized.dev",
@@ -10,9 +10,9 @@
     {
       "name": "prized",
       "source": "./",
-      "description": "Run code, shell commands and coding agents in Prized Sandboxes, Linux microVMs your agent creates, runs commands in, forks and deletes over HTTPS or the prized CLI.",
+      "description": "Give your coding agent its own Linux computers: Prized Sandboxes it creates, runs commands in, forks into live copies with memory and processes, pauses and deletes.",
       "category": "development",
-      "tags": ["sandbox", "microvm", "code-execution", "agents"]
+      "tags": ["sandbox", "microvm", "code-execution", "agents", "mcp", "fork"]
     }
   ]
 }
