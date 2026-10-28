@@ -1,6 +1,8 @@
 # Mirrors the skill prized.dev publishes into skills/ (see .github/scripts/sync_skill.py).
 # The skill is edited in prized-dev/doppel; after a change deploys, this picks it up
 # within the hour, or at once with: gh workflow run sync-skill.yml -R prized-dev/skills
+# A repository_dispatch of type skill-updated starts it too:
+#   gh api repos/prized-dev/skills/dispatches -f event_type=skill-updated
 name: Sync skill from prized.dev
 
 on:
