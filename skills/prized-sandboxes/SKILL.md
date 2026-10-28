@@ -15,9 +15,11 @@ A sandbox is a Linux microVM (Ubuntu 24.04, user `prized`, no sudo) that your co
 
 ## 1. The key
 
-Look for `PRIZED_API_KEY` in the environment or a gitignored `.env`. It starts with `dcp_`. If it is missing, stop and ask the user:
+Look for `PRIZED_API_KEY` in the environment or a gitignored `.env`. It starts with `dcp_`. If it is missing but `prized sandbox ls` works, this machine's CLI is signed in (an agent sign-up saves its key there): tell your person, then use the `prized sandbox` commands. Code (the helper, the raw calls below) reads only `PRIZED_API_KEY`, so for code ask for a key as below. Otherwise stop and ask the user:
 
 > I need a Prized API key. Make one at https://prized.dev/dashboard/workspace/api-keys with Full access, or Custom with Sandboxes: Write. New to Prized? https://prized.dev/onboarding/sandboxes signs you up with free credit and no card. Then run `export PRIZED_API_KEY=dcp_...`
+>
+> No account yet? I can make one for you: tell me your email address, then the 6-digit code Prized sends you.
 
 If the user has no account and asks you to make one, follow https://prized.dev/auth.md (their email address plus the 6-digit code Prized sends them). It saves the key with `prized login`, not in `PRIZED_API_KEY`, so after it use the `prized sandbox` commands, which read that login; the helper and the raw calls below read `PRIZED_API_KEY` only. Never put the key in source, command arguments or logs. Pass secrets a sandbox needs in `envVars` at create (stored encrypted, never returned), not inside commands.
 
@@ -35,7 +37,7 @@ Pass: `Python 3.12.3`, then the delete. Do nothing else until this works.
 
 ## 3. From code
 
-There is no Python or npm SDK yet (`pip install prized` does not exist; the npm package `prized` is the CLI installer). Use the HTTP API directly. For Python, copy `scripts/prized_sandbox.py` from this skill into the project (standard library only; also at https://prized.dev/skills/prized-sandboxes/scripts/prized_sandbox.py):
+Use the HTTP API directly (the npm package `prized` is the CLI installer, not a library). For Python, copy `scripts/prized_sandbox.py` from this skill into the project (standard library only; also at https://prized.dev/skills/prized-sandboxes/scripts/prized_sandbox.py):
 
 ```python
 from prized_sandbox import Sandbox
@@ -71,12 +73,12 @@ For TypeScript, copy the helper on https://prized.dev/docs/sandboxes-python-type
 - **Templates:** `prized-base-v1` (Python 3, Node 22, git, build tools) or `prized-agent-v1` (adds Claude Code and Codex; pass their API key in `envVars`). Default shape 4 vCPU, 8 GB; 1 to 32 vCPU and up to 128 GB.
 - **Free tier** (free credit only): 2 vCPU and 4 GB per sandbox, 10 sandboxes, 60 minutes of running each. An error with `"tier": "free"` is that limit, not a bug: tell the user a plan or top-up lifts it.
 - **Fork** needs a `running` or `paused` parent. `409 fork_capacity` carries `fits`: fork that many or fewer.
-- **No streaming output yet.** For long jobs, write output to a file and read it with a later exec or a download.
+- **Streaming output:** the HTTP API answers when a command ends, so write a long job's output to a file and read it with a later exec or a download.
 - **Prices:** read https://prized.dev/pricing, never quote them from memory.
 
 ## Sandbox or box?
 
-A sandbox is for code and agents, one job at a time. For a persistent cloud dev machine a person works on (synced folders, ports on localhost, Claude Code that keeps running with the laptop closed), use a Prized box instead: https://prized.dev/docs/quickstart.md
+A sandbox is for code and agents, one job at a time. For a persistent cloud dev machine a person works on (ports on localhost, Claude Code that keeps running with the laptop closed), use a Prized box instead. To set one up for your person, follow https://prized.dev/docs/agent-setup.md: it copies their project to the box once, with no sync.
 
 ## References
 

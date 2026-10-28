@@ -18,6 +18,15 @@ import uuid
 
 API = "https://api.prized.dev/api/v1"
 
+# Sandbox.write() runs this to put an upload in place with the mode of the file it replaces: uploaded
+# straight over a file, the bytes land 0600 on some images, so a 0755 script would stop running (exit 126).
+# A link at the target, or anything else that is not a regular file, exits 47: that is left to the files API.
+_PUT = """trap 'rm -f -- "$SRC"' EXIT
+if [ -L "$DST" ] || { [ -e "$DST" ] && [ ! -f "$DST" ]; }; then exit 47; fi
+if [ -e "$DST" ]; then chmod --reference="$DST" -- "$SRC" && chmod a-st -- "$SRC" || exit; fi
+mv -fT -- "$SRC" "$DST" || exit
+sync -- "$(dirname -- "$DST")" 2> /dev/null || true"""
+
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
     """urllib would resend the key to wherever a redirect points, so none is followed: a 3xx raises HTTPError."""
@@ -121,8 +130,25 @@ class Sandbox:
                     raise
                 time.sleep(i + 1)
 
-    def write(self, path, data: bytes):  # absolute path under /home/prized, up to 100 MiB
-        return _call("POST", f"{self.toolbox}/files/upload?path={urllib.parse.quote(path)}", data=data)
+    def write(self, path, data: bytes):
+        """Absolute path under /home/prized, up to 100 MiB. Uploads beside path, then renames it over path,
+        so a file it replaces keeps its mode. Returns {path, size}."""
+        tmp = path[: path.rfind("/") + 1] + f".prized-write-{uuid.uuid4().hex}"
+        out = _call("POST", f"{self.toolbox}/files/upload?path={urllib.parse.quote(tmp)}", data=data)
+        r = {"exitCode": -1}
+        try:
+            r = self.exec(_PUT, cwd="/", env={"SRC": tmp, "DST": path}, timeout=60)
+        finally:
+            if r["exitCode"] < 0:  # it never ran, or was stopped before it cleaned up
+                try:
+                    self.exec('rm -f -- "$SRC"', cwd="/", env={"SRC": tmp})
+                except Exception:
+                    pass
+        if r["exitCode"] == 47:  # a link, or not a file: the files API follows or refuses it, as before
+            return _call("POST", f"{self.toolbox}/files/upload?path={urllib.parse.quote(path)}", data=data)
+        if r["exitCode"] != 0:
+            raise RuntimeError(f"could not write {path} (exit {r['exitCode']}): {r['stderr'].strip()}")
+        return {**out, "path": path}
 
     def read(self, path) -> bytes:
         return _call("GET", f"{self.toolbox}/files/download?path={urllib.parse.quote(path)}")
