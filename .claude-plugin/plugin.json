@@ -1,8 +1,8 @@
 {
   "name": "prized",
   "displayName": "Prized",
-  "version": "1.0.1",
-  "description": "Run code, shell commands and coding agents in Prized Sandboxes, Linux microVMs your agent creates, runs commands in, forks and deletes over HTTPS or the prized CLI.",
+  "version": "1.1.0",
+  "description": "Run code, shell commands and coding agents in Prized Sandboxes, Linux microVMs your agent creates, runs commands in, forks and deletes.",
   "author": {
     "name": "Prized",
     "email": "team@prized.dev",
