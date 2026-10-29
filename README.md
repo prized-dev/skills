@@ -11,11 +11,13 @@ You need Node.js 20 or later.
 /plugin install prized@prized
 ```
 
-Start a new session and ask Claude to run `python3 --version` in a Prized sandbox.
+Start a new session and ask Claude to run `python3 --version` in a Prized sandbox. It creates one, prints the version and deletes it.
 
-**No Prized account?** Ask Claude to sign you up. It asks for your email, Prized emails you a 6-digit code, and you tell Claude the code. Your account comes with free credit and no card, and its key is saved for later sessions.
+**No Prized account?** Claude signs you up. It asks for your email, Prized emails you a 6-digit code, and you tell Claude the code. Your account comes with free credit and no card, and its key is saved for later sessions.
 
-**Already have one?** Run `prized login`, or export `PRIZED_API_KEY` in the shell you start Claude Code from. Make a key with Sandboxes: Write on the [API keys page](https://prized.dev/dashboard/workspace/api-keys).
+**Already have one?** Run `prized login` (no CLI yet? `curl -fsSL https://prized.dev/install.sh | sh`), or export `PRIZED_API_KEY` in the shell you start Claude Code from. Make a key with Sandboxes: Write on the [API keys page](https://prized.dev/dashboard/workspace/api-keys).
+
+**Added the server with `claude mcp add` before?** Remove it with `claude mcp remove prized-sandbox`, so Claude doesn't get every tool twice.
 
 ## Codex, Cursor and other agents
 
@@ -36,11 +38,11 @@ The full guide is [Use Prized from your coding agent](https://prized.dev/docs/sa
 
 ## What the plugin runs
 
-- **The MCP server.** Claude Code starts [`@prized/sandbox-mcp`](https://www.npmjs.com/package/@prized/sandbox-mcp) with `npx -y @prized/sandbox-mcp@0.1.0` while a session is open; the first start downloads it from npm. Its tools create, list, fork, pause, resume and delete sandboxes, run commands, read and write files, and upload and download them. `upload` and `download` reach only the folder Claude Code runs in, and are off when that is your home folder or `/`. Sandboxes it creates pause after 15 idle minutes and carry the label `created-by=prized-sandbox-mcp`. [How it works](https://prized.dev/docs/sandboxes-mcp).
+- **The MCP server.** Claude Code starts [`@prized/sandbox-mcp`](https://www.npmjs.com/package/@prized/sandbox-mcp) with `npx`, at the version [.mcp.json](.mcp.json) pins, while a session is open; the first start downloads it from npm. Its tools create, list, fork, pause, resume and delete sandboxes, run commands, read and write files, and upload and download them. `upload` and `download` reach only the folder Claude Code runs in, and are off when that is your home folder or `/`. Sandboxes it creates pause after 15 idle minutes and carry the label `created-by=prized-sandbox-mcp`. [How it works](https://prized.dev/docs/sandboxes-mcp).
 - **The skill**, instructions in [SKILL.md](skills/prized-sandboxes/SKILL.md) with three helper scripts the agent can copy into your project (Python standard library, and TypeScript with only `fetch`). It may install the `prized` CLI from `https://prized.dev/install.sh`.
 - No hooks, and nothing else in the background.
 
-The key comes from `PRIZED_API_KEY`, else the `prized` CLI's login (where sign-up saves it, `~/.config/prized/cp.token`, readable only by you). It is sent only to Prized, at `api.prized.dev` and each sandbox's own address, and no tool shows it. Each sandbox bills your Prized workspace per second while it runs; prices are on the [pricing page](https://prized.dev/pricing).
+The key comes from `PRIZED_API_KEY`, else the `prized` CLI's login, which is where sign-up saves it (a file only you can read). It is sent only to Prized, at `api.prized.dev` and each sandbox's own address, and no tool shows it. Each sandbox bills your Prized workspace per second while it runs; prices are on the [pricing page](https://prized.dev/pricing).
 
 ## Where the skill comes from
 
