@@ -10,7 +10,13 @@ Make an API key with Sandboxes: Write on the [API keys page](https://prized.dev/
 export PRIZED_API_KEY=dcp_...
 ```
 
-In Claude Code, add this repo as a plugin marketplace and install the plugin.
+One command for any of them. It finds Claude Code, Cursor, Codex, GitHub Copilot CLI and VS Code on your machine and installs the plugin in each.
+
+```bash
+npx plugins add prized-dev/skills
+```
+
+Or by agent. In Claude Code, add this repo as a plugin marketplace and install the plugin.
 
 ```text
 /plugin marketplace add prized-dev/skills
@@ -24,7 +30,7 @@ codex plugin marketplace add prized-dev/skills
 codex plugin add prized@prized
 ```
 
-For Cursor and other agents, install the skill with the `skills` CLI. It asks which agents get it.
+For any other agent (OpenCode, Goose, Windsurf, Cline, Zed and more), install the skill with the `skills` CLI. It asks which agents get it.
 
 ```bash
 npx skills add prized-dev/skills
