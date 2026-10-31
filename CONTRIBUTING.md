@@ -8,7 +8,7 @@ Issues and pull requests are welcome.
 
 ## The plugin and the workflows
 
-Pull requests are welcome for the plugin manifests (`.claude-plugin/`, `plugin.json`), the README and `.github/`. Before you open one:
+Pull requests are welcome for the plugin manifests (`.claude-plugin/`, `.cursor-plugin/`, `plugin.json`), the README and `.github/`. Before you open one:
 
 ```sh
 python3 -m unittest discover -s .github/scripts

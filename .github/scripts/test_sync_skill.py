@@ -168,21 +168,28 @@ class SyncTest(unittest.TestCase):
 
     def test_manifests_move_together(self) -> None:
         (self.root / "plugin.json").write_text('{\n  "name": "x",\n  "version": "1.0.0"\n}\n')
+        (self.root / ".cursor-plugin").mkdir()
+        (self.root / ".cursor-plugin/plugin.json").write_text('{\n  "name": "x",\n  "version": "1.0.0"\n}\n')
         with site({"SKILL.md": SKILL_MD}):
             self.run_sync()
         with site({"SKILL.md": SKILL_MD + b"v2\n"}):
             self.run_sync()
         self.assertEqual(json.loads((self.root / "plugin.json").read_text())["version"], "1.0.1")
+        self.assertEqual(json.loads((self.root / ".cursor-plugin/plugin.json").read_text())["version"], "1.0.1")
         self.assertEqual(self.version(), "1.0.1")
 
 
 class RepoManifestsTest(unittest.TestCase):
-    def test_root_and_claude_manifests_agree(self) -> None:
+    def test_root_claude_and_cursor_manifests_agree(self) -> None:
         repo = Path(__file__).parents[2]
         claude = json.loads((repo / ".claude-plugin/plugin.json").read_text())
         portable = json.loads((repo / "plugin.json").read_text())
         for key in ("name", "version", "description", "author", "homepage", "repository", "license", "keywords"):
             self.assertEqual(claude[key], portable[key], key)
+        cursor = json.loads((repo / ".cursor-plugin/plugin.json").read_text())
+        for key in ("name", "version", "description", "author", "homepage", "repository", "license", "keywords"):
+            self.assertEqual(cursor[key], portable[key], key)
+        self.assertTrue((repo / cursor["logo"]).is_file(), cursor["logo"])
         entry = json.loads((repo / ".claude-plugin/marketplace.json").read_text())["plugins"][0]
         self.assertEqual((entry["name"], entry["source"]), (claude["name"], "./"))
 
