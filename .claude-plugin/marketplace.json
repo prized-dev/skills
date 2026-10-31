@@ -10,9 +10,9 @@
     {
       "name": "prized",
       "source": "./",
-      "description": "Run code, shell commands and coding agents in Prized Sandboxes, Linux microVMs your agent creates, runs commands in, forks and deletes over HTTPS or the prized CLI.",
+      "description": "Run code, shell commands and coding agents on Prized, in Linux microVM sandboxes your agent creates, runs commands in, forks and deletes over HTTPS or the prized CLI, or on boxes, cloud Linux machines that stay on.",
       "category": "development",
-      "tags": ["sandbox", "microvm", "code-execution", "agents"]
+      "tags": ["sandbox", "microvm", "code-execution", "agents", "cloud-vm", "remote-dev"]
     }
   ]
 }
