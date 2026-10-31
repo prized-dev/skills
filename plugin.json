@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "prized",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Run code, shell commands and coding agents on Prized, in Linux microVM sandboxes your agent creates, runs commands in, forks and deletes over HTTPS or the prized CLI, or on boxes, cloud Linux machines that stay on.",
   "author": {
     "name": "Prized",
