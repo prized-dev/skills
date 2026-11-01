@@ -30,7 +30,7 @@ codex plugin marketplace add prized-dev/skills
 codex plugin add prized@prized
 ```
 
-For any other agent (OpenCode, Goose, Windsurf, Cline, Zed and more), install the skill with the `skills` CLI. It asks which agents get it.
+For any other agent (Gemini CLI, OpenCode, Goose, Windsurf, Cline, Zed and more), install the skill with the `skills` CLI. It asks which agents get it.
 
 ```bash
 npx skills add prized-dev/skills

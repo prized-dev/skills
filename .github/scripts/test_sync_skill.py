@@ -187,8 +187,10 @@ class RepoManifestsTest(unittest.TestCase):
         for key in ("name", "version", "description", "author", "homepage", "repository", "license", "keywords"):
             self.assertEqual(claude[key], portable[key], key)
         cursor = json.loads((repo / ".cursor-plugin/plugin.json").read_text())
-        for key in ("name", "version", "description", "author", "homepage", "repository", "license", "keywords"):
-            self.assertEqual(cursor[key], portable[key], key)
+        for key in ("name", "displayName", "version", "description", "homepage", "repository", "license", "keywords"):
+            self.assertEqual(cursor[key], claude[key], key)
+        # Cursor's schema allows only name and email in author.
+        self.assertEqual(cursor["author"], {k: portable["author"][k] for k in ("name", "email")})
         self.assertTrue((repo / cursor["logo"]).is_file(), cursor["logo"])
         entry = json.loads((repo / ".claude-plugin/marketplace.json").read_text())["plugins"][0]
         self.assertEqual((entry["name"], entry["source"]), (claude["name"], "./"))
