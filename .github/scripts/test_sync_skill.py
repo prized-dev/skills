@@ -189,7 +189,12 @@ class RepoManifestsTest(unittest.TestCase):
         cursor = json.loads((repo / ".cursor-plugin/plugin.json").read_text())
         for key in ("name", "displayName", "version", "description", "homepage", "repository", "license", "keywords"):
             self.assertEqual(cursor[key], claude[key], key)
-        # Cursor's schema allows only name and email in author.
+        # Cursor's schema (cursor/plugins schemas/plugin.schema.json) rejects any other key,
+        # and allows only name and email in author.
+        allowed = {"name", "displayName", "version", "description", "author", "homepage", "repository",
+                   "license", "keywords", "logo", "category", "tags", "publisher", "minClientVersions",
+                   "commands", "agents", "skills", "rules", "hooks", "mcpServers", "variables"}
+        self.assertLessEqual(set(cursor), allowed)
         self.assertEqual(cursor["author"], {k: portable["author"][k] for k in ("name", "email")})
         self.assertTrue((repo / cursor["logo"]).is_file(), cursor["logo"])
         entry = json.loads((repo / ".claude-plugin/marketplace.json").read_text())["plugins"][0]

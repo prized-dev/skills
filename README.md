@@ -16,6 +16,8 @@ One command finds Claude Code, Cursor, Codex, GitHub Copilot CLI and VS Code on 
 npx plugins add prized-dev/skills
 ```
 
+Run it again to update the copies it makes for Codex and VS Code.
+
 Or by agent. In Claude Code, add this repo as a plugin marketplace and install the plugin.
 
 ```text
@@ -30,7 +32,7 @@ codex plugin marketplace add prized-dev/skills
 codex plugin add prized@prized
 ```
 
-For any other agent (Gemini CLI, OpenCode, Goose, Windsurf, Cline, Zed and more), install the skill with the `skills` CLI. It asks which agents get it.
+The `skills` CLI installs the skill on its own in Cursor and almost any other agent (Gemini CLI, OpenCode, Goose, Windsurf, Cline, Zed and more). It asks which agents get it.
 
 ```bash
 npx skills add prized-dev/skills
