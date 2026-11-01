@@ -45,7 +45,12 @@ DISCOVERY = "/.well-known/agent-skills/index.json"
 SCHEMA = "https://schemas.agentskills.io/discovery/0.2.0/schema.json"
 LOCK = Path(".github/skills-source.json")
 # Every manifest that carries the plugin's version; they move together.
-MANIFESTS = [Path(".claude-plugin/plugin.json"), Path("plugin.json"), Path(".codex-plugin/plugin.json")]
+MANIFESTS = [
+    Path(".claude-plugin/plugin.json"),
+    Path("plugin.json"),
+    Path(".cursor-plugin/plugin.json"),
+    Path(".codex-plugin/plugin.json"),
+]
 
 NAME_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$")
 SEGMENT_RE = re.compile(r"^[A-Za-z0-9_-][A-Za-z0-9._-]*$")  # no "." or ".." segments

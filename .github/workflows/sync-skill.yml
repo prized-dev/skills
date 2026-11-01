@@ -44,7 +44,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           git add -A skills .github/skills-source.json
-          for m in .claude-plugin/plugin.json plugin.json .codex-plugin/plugin.json; do
+          for m in .claude-plugin/plugin.json plugin.json .cursor-plugin/plugin.json .codex-plugin/plugin.json; do
             if [ -f "$m" ]; then git add "$m"; fi
           done
           git config user.name "github-actions[bot]"
