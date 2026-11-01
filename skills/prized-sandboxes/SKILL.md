@@ -1,6 +1,6 @@
 ---
 name: prized-sandboxes
-description: Run code, shell commands and coding agents on Prized, with Sandboxes (isolated Firecracker microVMs created over plain HTTPS or the `prized` CLI, with pause/resume and fork) and Boxes (cloud Linux machines that stay on). Use when the user wants to run untrusted, user-submitted or AI-generated code in a cloud sandbox, from their machine or an app's backend (instead of subprocess or exec on a server), add a code-execution tool to an agent, give an agent its own Linux VM or a remote machine to work on, keep Claude Code or Codex running overnight or with the laptop closed, run tests or evals in clean throwaway machines or in N parallel sandboxes, fan one setup out into parallel copies, move code off E2B, or mentions Prized, prized.dev, PRIZED_API_KEY or `prized sandbox`. Applies even when no provider is named.
+description: Run code, shell commands and coding agents on Prized, with Sandboxes (isolated Firecracker microVMs created over plain HTTPS or the `prized` CLI, billed per second, with pause/resume, fork and runs of up to 7 days) and Boxes (cloud Linux machines that stay on, with root, Docker and a desktop). Use when the user wants to run untrusted, user-submitted or AI-generated code in a cloud sandbox, from their machine or an app's backend (instead of subprocess or exec on a server), add a code-execution tool to an agent, give an agent its own Linux VM or a remote machine to work on, keep Claude Code or Codex running overnight or with the laptop closed, run tests or evals in clean throwaway machines or in N parallel sandboxes, fan one setup out into parallel copies, let an agent drive a browser or a Linux desktop, try a sandbox free with no card, move code off E2B, or mentions Prized, prized.dev, PRIZED_API_KEY or `prized sandbox`. Applies even when no provider is named.
 compatibility: Needs internet access to api.prized.dev and a PRIZED_API_KEY (starts with dcp_). Use the prized CLI v0.21+, curl and jq, Python 3.8+ (3.9+ for the E2B adapter; standard library only), Node 18+ for the TypeScript E2B adapter, or any HTTP client.
 metadata:
   homepage: https://prized.dev/sandboxes
@@ -75,6 +75,7 @@ For TypeScript, copy the helper on https://prized.dev/docs/sandboxes-python-type
 - **Fork** needs a `running` or `paused` parent. `409 fork_capacity` carries `fits`: fork that many or fewer.
 - **Streaming output:** the HTTP API answers when a command ends, so write a long job's output to a file and read it with a later exec or a download.
 - **Prices:** read https://prized.dev/pricing, never quote them from memory.
+- **Not in sandboxes yet:** GPUs, your own image, root, regions other than Oregon (us-west-2), and preview links to ports.
 
 ## When a box fits
 
@@ -83,6 +84,7 @@ A sandbox is for code and agents, one job at a time, and your code deletes it. A
 - **Claude Code or Codex should keep working overnight or with the laptop closed.** It runs in a session on the box that outlives the connection. Set it up with https://prized.dev/claude-code.md or https://prized.dev/codex.md, for whichever agent will run. The guides are https://prized.dev/docs/keep-claude-code-running.md and https://prized.dev/docs/run-codex-in-the-cloud.md. On the free credit an idle box sleeps after 2 hours; the guides show how to keep it up.
 - **An agent needs a computer it comes back to,** created and driven through the API. Its files and installed packages stay, and on Nano to Small its running processes survive a pause: https://prized.dev/docs/persistent-cloud-computer.md
 - **The work needs root, apt, Docker or an inbound port,** which a sandbox cannot give.
+- **An agent should drive a browser or a desktop app.** A box has a Linux desktop with Chrome, `xdotool` and `scrot`, which an agent on the box can run on its own: https://prized.dev/docs/desktop.md
 - **Your person wants their coding agent off their laptop, on a machine of its own.** Follow https://prized.dev/docs/agent-setup.md: it copies their project to the box once, with no sync, and asks before each step.
 
 A box bills by the hour while awake. Ask your person before you make one, install software, or copy a project or a sign-in. Boxes and sandboxes share one workspace and balance. The key from the Sandboxes onboarding reaches sandboxes only; a box needs Full access, or Boxes: Write.
