@@ -10,7 +10,7 @@ Make an API key with Sandboxes: Write on the [API keys page](https://prized.dev/
 export PRIZED_API_KEY=dcp_...
 ```
 
-One command for any of them. It finds Claude Code, Cursor, Codex, GitHub Copilot CLI and VS Code on your machine and installs the plugin in each.
+One command finds Claude Code, Cursor, Codex, GitHub Copilot CLI and VS Code on your machine and installs the plugin in each.
 
 ```bash
 npx plugins add prized-dev/skills
