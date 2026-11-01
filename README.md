@@ -1,6 +1,6 @@
 # Prized skills
 
-Skills that teach coding agents to use [Prized](https://prized.dev). The `prized-sandboxes` skill lets Claude Code, Codex, Cursor and other agents run code, shell commands and other agents in Prized Sandboxes, Linux microVMs the agent creates, runs commands in, forks and deletes. The agent loads it only when a task calls for it.
+Skills that teach coding agents to use [Prized](https://prized.dev). The `prized-sandboxes` skill lets Claude Code, Codex, Cursor and other agents run code, shell commands and other agents in Prized Sandboxes, Linux microVMs the agent creates, runs commands in, forks and deletes, and tells them when a Prized box, a cloud Linux machine that stays on, fits better, for an agent that keeps working overnight or with your laptop closed. The agent loads it only when a task calls for it.
 
 ## Install
 
@@ -38,7 +38,7 @@ The full guide is [Use Prized from your coding agent](https://prized.dev/docs/sa
 
 The skill is instructions in [SKILL.md](skills/prized-sandboxes/SKILL.md) plus three helper scripts the agent can copy into your project (Python standard library, and TypeScript with only `fetch`). The plugin has no hooks, MCP servers or background processes.
 
-When the agent follows it, it reads `PRIZED_API_KEY` from your environment and sends it only to Prized, at `api.prized.dev` and each sandbox's edge address (`term.prized.dev` today). It may install the `prized` CLI from `https://prized.dev/install.sh`. Each sandbox it creates bills to your Prized workspace per second while it runs, and the skill tells the agent to set a maximum runtime and delete every sandbox. Prices are on the [pricing page](https://prized.dev/pricing).
+When the agent follows it, it reads `PRIZED_API_KEY` from your environment and sends it only to Prized, at `api.prized.dev` and each sandbox's edge address (`term.prized.dev` today). It may install the `prized` CLI from `https://prized.dev/install.sh`. Each sandbox it creates bills to your Prized workspace per second while it runs, and the skill tells the agent to set a maximum runtime and delete every sandbox. For work that should outlive a session, the skill points the agent at a Prized box, a cloud machine that bills by the hour while awake; it tells the agent to ask you before it makes one. Prices are on the [pricing page](https://prized.dev/pricing).
 
 ## Where the skill comes from
 
