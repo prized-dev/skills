@@ -408,9 +408,8 @@ class Sandbox:
         # a short-lived token, or anyone once the port is made public. Say how, rather than hand back a
         # host whose first request would answer 401.
         raise NotImplementedError(f"a sandbox port answers at https://{port}-{self.sandbox_id.replace('_', '-')}.p.prized.dev/ "
-                                  "for a request with your API key in the Prized-Key header, a token "
-                                  "(`prized sandbox port ID PORT --token`), or anyone once it is made public "
-                                  "(`--public`): https://prized.dev/docs/sandboxes#preview-a-port")
+                                  "for a request with your API key in the Prized-Key header, a short-lived token, "
+                                  "or anyone once it is made public: https://prized.dev/docs/sandboxes#preview-a-port")
 
     def __enter__(self): return self
     def __exit__(self, *exc): self.kill()

@@ -67,7 +67,7 @@ For TypeScript, copy the helper on https://prized.dev/docs/sandboxes-python-type
 - **Read `toolboxBase` from the sandbox object.** Never build the edge URL yourself.
 - **A `running` sandbox takes commands at once.** Never blindly retry a command after a 502: it may have run. A 410 `sandbox_deleted` means the sandbox is gone (or going): create a new one.
 - **A failed command still answers 200.** Read `exitCode`; a timeout is `exitCode: -1, timedOut: true`. `timeout` is seconds, 300 by default, 3600 at most.
-- **Paths are absolute and under `/home/prized`.** Commands run with `bash -c` in `/home/prized/work`. No root, so no `apt`; `pip` installs into a venv.
+- **Paths are absolute and under `/home/prized`.** Commands run with `bash -c` in `/home/prized/work`. No root, so no `apt`; `pip install` and `npm install -g` go to `~/.local`.
 - **Files move one at a time,** up to 100 MB each (`prized sandbox cp` or `/files/upload`). For a directory, tar it, copy the archive, and untar it with an exec.
 - **Always delete in a `finally`** (or `with`), and set `maxRuntimeMin` so a crash cannot leave a sandbox billing.
 - **Templates:** `prized-base-v1` (Python 3, Node 22, git, build tools) or `prized-agent-v1` (adds Claude Code and Codex; pass their API key in `envVars`). Default shape 4 vCPU, 8 GB; 1 to 32 vCPU and up to 128 GB.

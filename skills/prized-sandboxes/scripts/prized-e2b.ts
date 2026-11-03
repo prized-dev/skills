@@ -508,8 +508,8 @@ export class Sandbox {
    *  whose first request would answer 401. */
   getHost(port: number): string {
     throw new NotImplementedError(`a sandbox port answers at https://${port}-${this.sandboxId.replace('_', '-')}.p.prized.dev/ `
-      + "for a request with your API key in the Prized-Key header, a token (`prized sandbox port ID PORT --token`), "
-      + "or anyone once it is made public (`--public`): https://prized.dev/docs/sandboxes#preview-a-port");
+      + "for a request with your API key in the Prized-Key header, a short-lived token, "
+      + "or anyone once it is made public: https://prized.dev/docs/sandboxes#preview-a-port");
   }
 }
 
