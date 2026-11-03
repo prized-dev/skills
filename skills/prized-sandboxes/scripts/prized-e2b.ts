@@ -503,9 +503,13 @@ export class Sandbox {
   /** E2B's paginator: one page holding every match, filtered here after one GET. */
   static list(opts: SandboxListOpts = {}): SandboxPaginator { return new SandboxPaginator(opts); }
 
-  getHost(_port: number): string {
-    throw new NotImplementedError("Prized sandboxes take no inbound connections yet; serve from a box: "
-      + "`prized ports share PORT` (https://prized.dev/docs/ports)");
+  /** Not E2B's open host: a Prized port URL answers only a request with the API key in Prized-Key, a
+   *  short-lived token, or anyone once the port is made public. Says how, rather than hand back a host
+   *  whose first request would answer 401. */
+  getHost(port: number): string {
+    throw new NotImplementedError(`a sandbox port answers at https://${port}-${this.sandboxId.replace('_', '-')}.p.prized.dev/ `
+      + "for a request with your API key in the Prized-Key header, a token (`prized sandbox port ID PORT --token`), "
+      + "or anyone once it is made public (`--public`): https://prized.dev/docs/sandboxes#preview-a-port");
   }
 }
 

@@ -82,7 +82,7 @@ A sandbox is for code and agents, one job at a time, and your code deletes it. A
 
 - **Claude Code or Codex should keep working overnight or with the laptop closed.** It runs in a session on the box that outlives the connection. Set it up with https://prized.dev/claude-code.md or https://prized.dev/codex.md, for whichever agent will run. The guides are https://prized.dev/docs/keep-claude-code-running.md and https://prized.dev/docs/run-codex-in-the-cloud.md. On the free credit an idle box sleeps after 2 hours; the guides show how to keep it up.
 - **An agent needs a computer it comes back to,** created and driven through the API. Its files and installed packages stay, and on Nano to Small its running processes survive a pause: https://prized.dev/docs/persistent-cloud-computer.md
-- **The work needs root, apt, Docker or an inbound port,** which a sandbox cannot give.
+- **The work needs root, apt, Docker, or raw TCP in,** which a sandbox cannot give. A sandbox port does answer HTTP and WebSockets at an https URL, for your API key, a short-lived token, or anyone once its owner makes it public, and with a token or once public its `prized.link` URL opens in a browser tab: https://prized.dev/docs/sandboxes.md#preview-a-port
 - **Your person wants their coding agent off their laptop, on a machine of its own.** Follow https://prized.dev/docs/agent-setup.md: it copies their project to the box once, with no sync, and asks before each step.
 
 A box bills by the hour while awake. Ask your person before you make one, install software, or copy a project or a sign-in. Boxes and sandboxes share one workspace and balance. The key from the Sandboxes onboarding reaches sandboxes only; a box needs Full access, or Boxes: Write.
