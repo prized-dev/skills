@@ -1,7 +1,7 @@
 ---
 name: prized-sandboxes
-description: Run code, shell commands and coding agents on Prized, with Sandboxes (isolated Firecracker microVMs created over plain HTTPS or the `prized` CLI, with pause/resume and fork) and Boxes (cloud Linux machines that stay on). Use when the user wants to run untrusted, user-submitted or AI-generated code in a cloud sandbox, from their machine or an app's backend (instead of subprocess or exec on a server), add a code-execution tool to an agent, give an agent its own Linux VM or a remote machine to work on, keep Claude Code or Codex running overnight or with the laptop closed, run tests or evals in clean throwaway machines or in N parallel sandboxes, fan one setup out into parallel copies, move code off E2B, or mentions Prized, prized.dev, PRIZED_API_KEY or `prized sandbox`. Applies even when no provider is named.
-compatibility: Needs internet access to api.prized.dev and a PRIZED_API_KEY (starts with dcp_). Use the prized CLI v0.21+, curl and jq, Python 3.8+ (3.9+ for the E2B adapter; standard library only), Node 18+ for the TypeScript E2B adapter, or any HTTP client.
+description: Run code, shell commands and coding agents on Prized, with Sandboxes (isolated Firecracker microVMs created from the Python or TypeScript SDK, plain HTTPS or the `prized` CLI, with pause/resume and fork) and Boxes (cloud Linux machines that stay on). Use when the user wants to run untrusted, user-submitted or AI-generated code in a cloud sandbox, from their machine or an app's backend (instead of subprocess or exec on a server), add a code-execution tool to an agent, give an agent its own Linux VM or a remote machine to work on, keep Claude Code or Codex running overnight or with the laptop closed, run tests or evals in clean throwaway machines or in N parallel sandboxes, fan one setup out into parallel copies, move code off E2B, or mentions Prized, prized.dev, PRIZED_API_KEY or `prized sandbox`. Applies even when no provider is named.
+compatibility: Needs internet access to api.prized.dev and a PRIZED_API_KEY (starts with dcp_). Use the prized CLI v0.21+, the Python SDK (Python 3.10+) or TypeScript SDK (Node 18+), curl and jq, Python 3.8+ (3.9+ for the E2B adapter; standard library only), Node 18+ for the TypeScript E2B adapter, or any HTTP client.
 metadata:
   homepage: https://prized.dev/sandboxes
   docs: https://prized.dev/docs/sandboxes.md
@@ -37,7 +37,18 @@ Pass: `Python 3.12.3`, then the delete. Do nothing else until this works.
 
 ## 3. From code
 
-Use the HTTP API directly (the npm package `prized` is the CLI installer, not a library). For Python, copy `scripts/prized_sandbox.py` from this skill into the project (standard library only; also at https://prized.dev/skills/prized-sandboxes/scripts/prized_sandbox.py):
+The SDK is the shortest path: `pip install prized` (Python 3.10 or later) or `npm i @prized/sdk` (Node 18 or later; the unscoped npm package `prized` is the CLI installer), at https://prized.dev/docs/sandboxes-python-typescript.md:
+
+```python
+from prized import Sandbox
+
+with Sandbox.create(max_runtime_min=30) as sb:           # deleted when the block ends
+    sb.files.write("/home/prized/work/main.py", "print(6 * 7)")
+    r = sb.exec("python3 main.py", timeout=120)
+    print(r.exit_code, r.stdout)                           # 0 42
+```
+
+With no dependency, use the HTTP API directly. For Python, copy `scripts/prized_sandbox.py` from this skill into the project (standard library only; also at https://prized.dev/skills/prized-sandboxes/scripts/prized_sandbox.py):
 
 ```python
 from prized_sandbox import Sandbox
@@ -73,7 +84,8 @@ For TypeScript, copy the helper on https://prized.dev/docs/sandboxes-python-type
 - **Templates:** `prized-base-v1` (Python 3, Node 22, git, build tools) or `prized-agent-v1` (adds Claude Code and Codex; pass their API key in `envVars`). Default shape 4 vCPU, 8 GB; 1 to 32 vCPU and up to 128 GB.
 - **Free tier** (free credit only): 2 vCPU and 4 GB per sandbox, 10 sandboxes, 60 minutes of running each. An error with `"tier": "free"` is that limit, not a bug: tell the user a plan or top-up lifts it.
 - **Fork** needs a `running` or `paused` parent. `409 fork_capacity` carries `fits`: fork that many or fewer.
-- **Streaming output:** the HTTP API answers when a command ends, so write a long job's output to a file and read it with a later exec or a download.
+- **Streaming output:** the SDKs stream it (`on_stdout`, `onStdout`). The HTTP API answers when a command ends, so without an SDK, write a long job's output to a file and read it with a later exec or a download.
+- **Big output:** one exec keeps the first 4 MiB of each output stream, and `truncated` says when it cut one. For builds, test suites and logs, pass `full_output=True` (Python) or `fullOutput: true` (TypeScript): the result keeps up to 100 MiB of each stream.
 - **Prices:** read https://prized.dev/pricing, never quote them from memory.
 
 ## When a box fits
