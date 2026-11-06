@@ -14,6 +14,7 @@
   "keywords": ["prized", "sandbox", "sandboxes", "box", "microvm", "firecracker", "code-execution", "agents", "cloud-vm", "remote-dev"],
   "icon": "./assets/icon.png",
   "documentationUrl": "https://prized.dev/docs/sandboxes-coding-agents",
+  "supportUrl": "https://github.com/prized-dev/skills/issues",
   "privacyPolicyUrl": "https://prized.dev/privacy",
   "termsOfServiceUrl": "https://prized.dev/terms"
 }
