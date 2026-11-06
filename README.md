@@ -1,7 +1,5 @@
 # Prized skills
 
-[![skills.sh](https://skills.sh/b/prized-dev/skills)](https://skills.sh/prized-dev/skills)
-
 Skills that teach coding agents to use [Prized](https://prized.dev). The `prized-sandboxes` skill lets Claude Code, Codex, Cursor and other agents run code, shell commands and other agents in Prized Sandboxes, Linux microVMs the agent creates, runs commands in, forks and deletes, and tells them when a Prized box, a cloud Linux machine that stays on, fits better, for an agent that keeps working overnight or with your laptop closed. The agent loads it only when a task calls for it.
 
 ## Install
