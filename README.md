@@ -10,7 +10,7 @@ Skills that teach coding agents to use [Prized](https://prized.dev). The `prized
 npx skills add prized-dev/skills -g -y -a claude-code -a codex -a cursor -a github-copilot
 ```
 
-This installs the skill for every project in Claude Code, Codex, Cursor and GitHub Copilot. Cline, Zed, Warp and other agents that read `~/.agents/skills` get it too. To choose other agents from a list, leave out `-y` and the `-a` flags.
+This installs the skill for every project in Claude Code, Codex, Cursor and GitHub Copilot, and in the agents that read `~/.agents/skills`, such as Gemini CLI, OpenCode, Cline and Zed. For an agent with its own skills folder, add `-a` with its name, such as `-a windsurf` or `-a goose`.
 
 Make an API key with Sandboxes: Write on the [API keys page](https://prized.dev/dashboard/workspace/api-keys) and export it in the shell you start your agent from. New to Prized? [Sandboxes onboarding](https://prized.dev/onboarding/sandboxes) signs you up with free credit and no card.
 
@@ -61,7 +61,7 @@ Prized handles this data under its [privacy policy](https://prized.dev/privacy).
 
 ## Where the skill comes from
 
-The skill is maintained with the Prized product and published at [prized.dev/SKILL.md](https://prized.dev/SKILL.md). A GitHub Action copies the published version into `skills/` every hour and checks it against the digest prized.dev lists, so `npx skills add prized-dev/skills` installs exactly what prized.dev publishes. Edits to `skills/` here are overwritten. For a fix or a request, open an issue or email team@prized.dev.
+The skill is maintained with the Prized product and published at [prized.dev/SKILL.md](https://prized.dev/SKILL.md). A GitHub Action copies the published version into `skills/` every hour and checks it against the digest prized.dev lists, so `npx skills add prized-dev/skills` installs what prized.dev publishes, synced hourly. Edits to `skills/` here are overwritten. For a fix or a request, open an issue or email team@prized.dev.
 
 ## License
 
