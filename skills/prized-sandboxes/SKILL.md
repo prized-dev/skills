@@ -97,7 +97,7 @@ A sandbox is for code and agents, one job at a time, and your code deletes it. A
 - **The work needs root, apt, Docker, or raw TCP in,** which a sandbox cannot give. A sandbox port does answer HTTP and WebSockets at an https URL, for your API key, a short-lived token, or anyone once its owner makes it public, and with a token or once public its `prized.link` URL opens in a browser tab: https://prized.dev/docs/sandboxes.md#preview-a-port
 - **Your person wants their coding agent off their laptop, on a machine of its own.** Follow https://prized.dev/docs/agent-setup.md: it copies their project to the box once, with no sync, and asks before each step.
 
-A box bills by the hour while awake. Ask your person before you make one, install software, or copy a project or a sign-in. Boxes and sandboxes share one workspace and balance. The key from the Sandboxes onboarding reaches sandboxes only; a box needs Full access, or Boxes: Write.
+A box bills by the hour while awake. On the free credit alone (no plan, no grant and nothing paid in), a box set to auto-pause off, or to a window over 12 hours, pauses after 12 hours idle, never in its first 24 hours; on a plan or after a top-up there is no limit. Ask your person before you make one, install software, or copy a project or a sign-in. Boxes and sandboxes share one workspace and balance. The key from the Sandboxes onboarding reaches sandboxes only; a box needs Full access, or Boxes: Write.
 
 ## References
 
