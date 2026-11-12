@@ -355,7 +355,7 @@ export class Sandbox {
     const o: SandboxOpts = typeof a === "string" ? { ...b, template: a } : { ...a };
     const template = o.template ?? "base";
     if (!Object.hasOwn(settings.templates, template) && !template.startsWith("prized-"))
-      throw new TemplateError(`no template "${template}": Prized has prized-base-v1 and prized-agent-v1; set one up and fork it `
+      throw new TemplateError(`no template "${template}": Prized has prized-base-v1, prized-agent-v1 and prized-docker-v1 (paid workspaces only); set one up and fork it `
         + "(https://prized.dev/docs/sandboxes-own-template), or map it in settings.templates");
     if (o.mcp || o.network || o.allowInternetAccess === false || o.volumeMounts)
       throw new NotImplementedError("no MCP gateway, egress rules or volumes on Prized yet; every sandbox has outbound internet");

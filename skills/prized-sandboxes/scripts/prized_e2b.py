@@ -287,7 +287,7 @@ class Sandbox:
         auto_pause=True) it pauses after `timeout` idle seconds instead; any request resumes it, as auto_resume does.
         Prized only: vcpu, memory_mb and disk_gb set the shape; auto_delete_min deletes it after that many minutes paused."""
         if template not in TEMPLATES and not str(template).startswith("prized-"):
-            raise TemplateException(f"no template {template!r}: Prized has prized-base-v1 and prized-agent-v1; set one up "
+            raise TemplateException(f"no template {template!r}: Prized has prized-base-v1, prized-agent-v1 and prized-docker-v1 (paid workspaces only); set one up "
                                     "and fork it (https://prized.dev/docs/sandboxes-own-template), or map it in TEMPLATES")
         if mcp or network or allow_internet_access is False:
             raise NotImplementedError("no MCP gateway or egress rules on Prized yet; every sandbox has outbound internet")

@@ -3,7 +3,7 @@
   "note": "Written by .github/scripts/sync_skill.py. Edit the skill in prized-dev/doppel, not here.",
   "skills": {
     "prized-sandboxes": {
-      "digest": "sha256:0a3ee4e2e93150f64b3b0a6be5599eba7b9797d5cd388abe24f33b3ba5990915",
+      "digest": "sha256:f264c791c3ba030363aff35f262ce97eacb3c480b88937903d9c837d0a6c1f25",
       "files": [
         "SKILL.md",
         "scripts/prized-e2b.ts",

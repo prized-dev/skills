@@ -81,7 +81,8 @@ For TypeScript, copy the helper on https://prized.dev/docs/sandboxes-python-type
 - **Paths are absolute and under `/home/prized`.** Commands run with `bash -c` in `/home/prized/work`. No root, so no `apt`; `pip install` and `npm install -g` go to `~/.local`.
 - **Files move one at a time,** up to 100 MB each (`prized sandbox cp` or `/files/upload`). For a directory, tar it, copy the archive, and untar it with an exec.
 - **Always delete in a `finally`** (or `with`), and set `maxRuntimeMin` so a crash cannot leave a sandbox billing.
-- **Templates:** `prized-base-v1` (Python 3, Node 22, git, build tools) or `prized-agent-v1` (adds Claude Code and Codex; pass their API key in `envVars`). Default shape 4 vCPU, 8 GB; 1 to 32 vCPU and up to 128 GB.
+- **Templates:** `prized-base-v1` (Python 3, Node 22, git, build tools), `prized-agent-v1` (adds Claude Code and Codex; pass their API key in `envVars`), or `prized-docker-v1` (adds Docker, Compose and Buildx, usable as `prized` without sudo; give it room with `resources.diskGb: 30`, and `apt-get install` works inside a container). Default shape 4 vCPU, 8 GB; 1 to 32 vCPU and up to 128 GB.
+- **Docker needs a paid workspace.** On free credit alone, a create, fork or resume from `prized-docker-v1` answers `402 template_needs_payment` with `billingUrl`: tell the user a plan or top-up opens it, or use the other templates. Guide: https://prized.dev/docs/sandboxes-docker.md
 - **Free tier** (free credit only): 2 vCPU and 4 GB per sandbox, 10 sandboxes, 60 minutes of running each. An error with `"tier": "free"` is that limit, not a bug: tell the user a plan or top-up lifts it.
 - **Fork** needs a `running` or `paused` parent. `409 fork_capacity` carries `fits`: fork that many or fewer.
 - **Streaming output:** the SDKs stream it (`on_stdout`, `onStdout`). The HTTP API answers when a command ends, so without an SDK, write a long job's output to a file and read it with a later exec or a download.
@@ -94,7 +95,7 @@ A sandbox is for code and agents, one job at a time, and your code deletes it. A
 
 - **Claude Code or Codex should keep working overnight or with the laptop closed.** It runs in a session on the box that outlives the connection. Set it up with https://prized.dev/claude-code.md or https://prized.dev/codex.md, for whichever agent will run. The guides are https://prized.dev/docs/keep-claude-code-running.md and https://prized.dev/docs/run-codex-in-the-cloud.md. On the free credit an idle box sleeps after 2 hours; the guides show how to keep it up.
 - **An agent needs a computer it comes back to,** created and driven through the API. Its files and installed packages stay, and on Nano to Small its running processes survive a pause: https://prized.dev/docs/persistent-cloud-computer.md
-- **The work needs root, apt, Docker, or raw TCP in,** which a sandbox cannot give. A sandbox port does answer HTTP and WebSockets at an https URL, for your API key, a short-lived token, or anyone once its owner makes it public, and with a token or once public its `prized.link` URL opens in a browser tab: https://prized.dev/docs/sandboxes.md#preview-a-port
+- **The work needs sudo, apt, or raw TCP in,** which a sandbox cannot give (Docker runs on `prized-docker-v1` once the workspace has paid in). A sandbox port does answer HTTP and WebSockets at an https URL, for your API key, a short-lived token, or anyone once its owner makes it public, and with a token or once public its `prized.link` URL opens in a browser tab: https://prized.dev/docs/sandboxes.md#preview-a-port
 - **Your person wants their coding agent off their laptop, on a machine of its own.** Follow https://prized.dev/docs/agent-setup.md: it copies their project to the box once, with no sync, and asks before each step.
 
 A box bills by the hour while awake. On the free credit alone (no plan, no grant and nothing paid in), a box set to auto-pause off, or to a window over 12 hours, pauses after 12 hours idle, never in its first 24 hours; on a plan or after a top-up there is no limit. Ask your person before you make one, install software, or copy a project or a sign-in. Boxes and sandboxes share one workspace and balance. The key from the Sandboxes onboarding reaches sandboxes only; a box needs Full access, or Boxes: Write.
@@ -104,5 +105,6 @@ A box bills by the hour while awake. On the free credit alone (no plan, no grant
 - Every route, field and error code: https://prized.dev/docs/sandboxes-api.md
 - Run an AI agent's commands in a microVM: https://prized.dev/docs/sandboxes-run-agent-code.md
 - Fork a running VM to run work in parallel: https://prized.dev/docs/sandboxes-fork-parallel.md
+- Run Docker and Compose in a sandbox: https://prized.dev/docs/sandboxes-docker.md
 - Moving from E2B: https://prized.dev/docs/moving-from-e2b.md
 - CLI: `prized sandbox --help` (create, exec, cp, fork, pause, resume, rm, ls, templates)
