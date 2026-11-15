@@ -244,7 +244,7 @@ def _abandon_script(run):  # a start that may or may not have happened can no lo
 
 # A write, as the Prized SDKs write: uploaded under a fresh name, then put in place by one command that gives it the
 # mode of the regular file it replaces (a script stays executable). Uploaded straight over a file, the bytes land 0600
-# on some sandbox images. The SDKs' own script, rendered as sdk/file-scripts/publish.sh (the tests check). Exit 47:
+# on some sandbox images. The SDKs' own script, rendered as sdk/file-scripts/publish.sh (keep the two the same). Exit 47:
 # `dst` is a link; 48: a directory or another file that is not a regular file; either way nothing changed.
 def _publish_script(src, dst):
     return "\n".join([

@@ -310,7 +310,7 @@ function abandonScript(run: string): string {
 
 // A write, as the Prized SDKs write: uploaded under a fresh name, then put in place by one command that gives it the
 // mode of the regular file it replaces (a script stays executable). Uploaded straight over a file, the bytes land 0600
-// on some sandbox images. The SDKs' own script, rendered as sdk/file-scripts/publish.sh (the tests check). Exit 47:
+// on some sandbox images. The SDKs' own script, rendered as sdk/file-scripts/publish.sh (keep the two the same). Exit 47:
 // `dst` is a link; 48: a directory or another file that is not a regular file; either way nothing changed.
 function publishScript(src: string, dst: string): string {
   return [
@@ -323,7 +323,7 @@ function publishScript(src: string, dst: string): string {
   ].join("\n");
 }
 
-/** @internal The SDKs' scripts, exported for tests (they must stay sdk/run-scripts/*.sh and sdk/file-scripts/*.sh). */
+/** @internal The SDKs' scripts, as sdk/run-scripts/*.sh and sdk/file-scripts/*.sh render them: keep the two the same. */
 export const _runScripts = { WRAPPER, startScript, pollScript, killScript, cleanupScript, abandonScript, publishScript };
 
 function info(s: Raw): SandboxInfo {
