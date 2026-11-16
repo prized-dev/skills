@@ -151,6 +151,17 @@ class SyncTest(unittest.TestCase):
         self.assertFalse((self.root / "skills/other").exists())
         self.assertTrue((self.root / "skills/demo/SKILL.md").exists())
 
+    def test_local_skill_is_kept(self) -> None:
+        local = sync_skill.LOCAL_SKILLS[0]
+        (self.root / "skills" / local).mkdir(parents=True)
+        (self.root / "skills" / local / "SKILL.md").write_bytes(b"kept\n")
+        with site({"SKILL.md": SKILL_MD}):
+            self.assertEqual(self.run_sync(), 0)
+            self.assertEqual(self.run_sync("--check"), 0)
+        self.assertEqual((self.root / "skills" / local / "SKILL.md").read_bytes(), b"kept\n")
+        lock = json.loads((self.root / ".github/skills-source.json").read_text())
+        self.assertNotIn(local, lock["skills"])
+
     def test_bump_sets_the_top_level_version_only(self) -> None:
         (self.root / ".claude-plugin/plugin.json").write_text(
             '{\n  "metadata": {"version": "9"},\n  "name": "x",\n  "version": "1.0.0"\n}\n'
@@ -165,6 +176,13 @@ class SyncTest(unittest.TestCase):
     def test_live_skill_shape_passes_the_frontmatter_check(self) -> None:
         live = (Path(__file__).parents[2] / "skills/prized-sandboxes/SKILL.md").read_text()
         sync_skill.check_frontmatter("prized-sandboxes", live)
+
+    def test_local_skills_pass_the_frontmatter_check(self) -> None:
+        repo = Path(__file__).parents[2]
+        for name in sync_skill.LOCAL_SKILLS:
+            text = (repo / "skills" / name / "SKILL.md").read_text()
+            sync_skill.check_frontmatter(name, text)
+            self.assertIsNone(sync_skill.RUNS_ON_LOAD.search(text), name)
 
     def test_manifests_move_together(self) -> None:
         (self.root / "plugin.json").write_text('{\n  "name": "x",\n  "version": "1.0.0"\n}\n')
