@@ -12,8 +12,8 @@ This script copies exactly that publication, so this repo can never say
 more (or less) than prized.dev does. skills/ belongs to the mirror: a
 folder prized.dev doesn't publish is removed, except the skills this repo
 keeps itself (LOCAL_SKILLS, edited here by pull request). If prized.dev
-starts publishing one of those, its published copy replaces this repo's.
-It only reads public URLs and needs no token.
+starts publishing one of those, the sync fails closed until a person picks
+one source. It only reads public URLs and needs no token.
 
 It fails closed, changing nothing, on anything a person should look at
 first: a digest mismatch, an unsafe archive, or a skill that would run
@@ -259,6 +259,9 @@ def main() -> int:
     root = Path(args.root)
 
     skills = published(site)
+    clash = sorted(set(skills) & set(LOCAL_SKILLS))
+    if clash:
+        raise SyncError(f"prized.dev now publishes {clash}, which this repo keeps itself (LOCAL_SKILLS); pick one source first")
     base = root / "skills"
     present = sorted(p.name for p in base.iterdir() if p.is_dir() and not p.name.startswith(".")) if base.is_dir() else []
     changed_skills = {n: s for n, s in sorted(skills.items()) if local_files(base / n) != s["files"]}
