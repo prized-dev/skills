@@ -10,8 +10,10 @@ held passages, and publishes it for `npx skills add https://prized.dev`:
 
 This script copies exactly that publication, so this repo can never say
 more (or less) than prized.dev does. skills/ belongs to the mirror: a
-folder prized.dev doesn't publish is removed. It only reads public URLs
-and needs no token.
+folder prized.dev doesn't publish is removed, except the skills this repo
+keeps itself (LOCAL_SKILLS, edited here by pull request). If prized.dev
+starts publishing one of those, the sync fails closed until a person picks
+one source. It only reads public URLs and needs no token.
 
 It fails closed, changing nothing, on anything a person should look at
 first: a digest mismatch, an unsafe archive, or a skill that would run
@@ -44,6 +46,9 @@ SITE = "https://prized.dev"
 DISCOVERY = "/.well-known/agent-skills/index.json"
 SCHEMA = "https://schemas.agentskills.io/discovery/0.2.0/schema.json"
 LOCK = Path(".github/skills-source.json")
+# Skills kept in this repo rather than mirrored: the sync leaves their folders
+# alone, and the Validate workflow lets pull requests edit them.
+LOCAL_SKILLS = ("prized-boxes",)
 # Every manifest that carries the plugin's version; they move together.
 MANIFESTS = [
     Path(".claude-plugin/plugin.json"),
@@ -254,10 +259,13 @@ def main() -> int:
     root = Path(args.root)
 
     skills = published(site)
+    clash = sorted(set(skills) & set(LOCAL_SKILLS))
+    if clash:
+        raise SyncError(f"prized.dev now publishes {clash}, which this repo keeps itself (LOCAL_SKILLS); pick one source first")
     base = root / "skills"
     present = sorted(p.name for p in base.iterdir() if p.is_dir() and not p.name.startswith(".")) if base.is_dir() else []
     changed_skills = {n: s for n, s in sorted(skills.items()) if local_files(base / n) != s["files"]}
-    extra = [n for n in present if n not in skills]
+    extra = [n for n in present if n not in skills and n not in LOCAL_SKILLS]
     changed = [f"{n} ({s['digest'][:19]})" for n, s in changed_skills.items()]
     changed += [f"{n!r} (not published, removed)" for n in extra]
 
