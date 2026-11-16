@@ -18,14 +18,15 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Pull requests leave skills/ alone
+      # skills/prized-boxes is kept in this repo (LOCAL_SKILLS in sync_skill.py); the rest is mirrored.
+      - name: Pull requests leave the mirrored skills alone
         if: github.event_name == 'pull_request'
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          touched=$(git diff --name-only "origin/$BASE_REF...HEAD" -- skills .github/skills-source.json)
+          touched=$(git diff --name-only "origin/$BASE_REF...HEAD" -- skills .github/skills-source.json ':(exclude)skills/prized-boxes')
           if [ -n "$touched" ]; then
-            echo "::error::skills/ is a copy of https://prized.dev/SKILL.md and is overwritten every hour. Open an issue or email team@prized.dev with the change instead."
+            echo "::error::skills/ (except skills/prized-boxes) is a copy of https://prized.dev/SKILL.md and is overwritten every hour. Open an issue or email team@prized.dev with the change instead."
             echo "$touched"
             exit 1
           fi

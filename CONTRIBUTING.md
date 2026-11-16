@@ -2,9 +2,11 @@
 
 Issues and pull requests are welcome.
 
-## The skill
+## The skills
 
-`skills/` is a mirror of the skill prized.dev publishes, updated every hour by the Sync skill workflow, so a pull request that edits it would be overwritten. For a fix or a request to the skill, open an issue or email team@prized.dev.
+`skills/prized-boxes` is maintained in this repo: pull requests are welcome.
+
+`skills/prized-sandboxes` is a mirror of the skill prized.dev publishes, updated every hour by the Sync skill workflow, so a pull request that edits it would be overwritten. For a fix or a request to it, open an issue or email team@prized.dev.
 
 ## The plugin and the workflows
 
