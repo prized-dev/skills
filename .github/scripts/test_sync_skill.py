@@ -177,12 +177,27 @@ class SyncTest(unittest.TestCase):
         live = (Path(__file__).parents[2] / "skills/prized-sandboxes/SKILL.md").read_text()
         sync_skill.check_frontmatter("prized-sandboxes", live)
 
+    def test_publishing_a_local_skill_fails_closed(self) -> None:
+        local = sync_skill.LOCAL_SKILLS[0]
+        (self.root / "skills" / local).mkdir(parents=True)
+        (self.root / "skills" / local / "SKILL.md").write_bytes(b"kept\n")
+        with mock.patch.object(sync_skill, "LOCAL_SKILLS", ("demo",)), site({"SKILL.md": SKILL_MD}):
+            with self.assertRaises(sync_skill.SyncError):
+                self.run_sync()
+        self.assertEqual((self.root / "skills" / local / "SKILL.md").read_bytes(), b"kept\n")
+        self.assertFalse((self.root / "skills/demo").exists())
+
     def test_local_skills_pass_the_frontmatter_check(self) -> None:
         repo = Path(__file__).parents[2]
         for name in sync_skill.LOCAL_SKILLS:
             text = (repo / "skills" / name / "SKILL.md").read_text()
             sync_skill.check_frontmatter(name, text)
             self.assertIsNone(sync_skill.RUNS_ON_LOAD.search(text), name)
+
+    def test_validate_workflow_exempts_each_local_skill(self) -> None:
+        workflow = (Path(__file__).parents[2] / ".github/workflows/validate.yml").read_text()
+        for name in sync_skill.LOCAL_SKILLS:
+            self.assertIn(f"':(exclude)skills/{name}'", workflow, name)
 
     def test_manifests_move_together(self) -> None:
         (self.root / "plugin.json").write_text('{\n  "name": "x",\n  "version": "1.0.0"\n}\n')
