@@ -6,14 +6,14 @@ The skill runs a local CLI, so the plugin is desktop only (`requires_local_execu
 
 ## Try it locally
 
-Codex installs it from a local marketplace. From a folder that holds this one as `plugins/prized` and a `.agents/plugins/marketplace.json` that points at it ([OpenAI's guide](https://developers.openai.com/plugins/build/plugins#install-a-local-plugin-manually)):
+This repo is a Codex marketplace: [`.agents/plugins/marketplace.json`](../.agents/plugins/marketplace.json) points at this folder ([OpenAI's guide](https://developers.openai.com/plugins/build/plugins#add-a-marketplace-from-the-cli)).
 
 ```bash
-codex plugin marketplace add ./my-marketplace
-codex plugin add prized@<marketplace-name>
+codex plugin marketplace add prized-dev/skills
+codex plugin add prized@prized
 ```
 
-Then ask Codex in a project: "Put this project on a Prized box and run its tests there."
+In the ChatGPT desktop app, restart it after adding the marketplace and install **Prized** from the Plugins Directory. Then ask in a local thread, in a project: "Put this project on a Prized box and run its tests there."
 
 ## Check it and build the upload ZIP
 

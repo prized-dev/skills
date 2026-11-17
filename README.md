@@ -36,7 +36,7 @@ New accounts get free credit, with no card. Boxes bill by the hour while awake a
 
 ## ChatGPT and Codex
 
-[`chatgpt/`](chatgpt/) is the same boxes skill packaged for OpenAI's plugin directory, which ChatGPT and Codex share, with Codex in place of Claude Code. It is desktop only: it runs the `prized` CLI in a local thread.
+[`chatgpt/`](chatgpt/) is the same boxes skill packaged for OpenAI's plugin directory, which ChatGPT and Codex share, with Codex in place of Claude Code. It is desktop only: it runs the `prized` CLI in a local thread. Codex and the ChatGPT desktop app install it from this repo's Codex marketplace: `codex plugin marketplace add prized-dev/skills`, then `codex plugin add prized@prized`.
 
 ## Sandboxes
 

@@ -13,14 +13,14 @@ This skill runs the `prized` CLI in a shell on the user's own computer. If you h
 
 The user's explicit instructions come before the defaults here. These hold either way:
 
-- Ask the user before you install the CLI, create or resize a box (both cost money), copy the project, or copy any credential. Pass only the flags they said yes to.
+- Ask the user before you install the CLI, create, resize or wake a box (all cost money), copy the project, or copy any credential. Pass only the flags they said yes to.
 - Copy, never move or delete their files. The project goes to the box once, one way (`--copy-once`). Start a sync only if they ask for one.
 - Never ask the user for a password, an API key or a sign-in code, and never make an account for them. Never run `prized login` yourself, and never switch the account this computer uses.
 - Never print, log or commit a key, never put one on a command line, and never read `~/.config/prized`.
 - Act only on the box the user named. Never pause, resize or delete a box they did not ask about.
-- Do not quote prices or pick a plan. For rates, point the user to https://prized.dev/pricing. Never start a checkout or pay for them.
+- Do not quote prices or pick a plan. For rates, point the user to https://prized.dev/pricing. Never start a checkout, pass along a billing or checkout link, or pay for them: if a command is refused for money, say what the refusal says is needed.
 - Add `--json` to `prized` commands: each prints one JSON object with an `ok` field, and failures carry `error.code` and a `hint` to relay (codes: https://prized.dev/docs/cli.md#for-agents-and-scripts).
-- `prized box new --wait` and `prized setup` can take several minutes: give them a 10 minute timeout. They need the network and write outside this folder; if your sandbox blocks them, ask the user to approve running them outside it.
+- Every `prized` command needs the network, and setup and the installer write outside this folder. If your sandbox blocks a command, ask the user to approve running it outside the sandbox; do not read a network error as a sign-in problem. `prized box new --wait` and `prized setup` can take several minutes: give them a 10 minute timeout.
 
 ## 1. Install the CLI
 
@@ -35,6 +35,8 @@ Run `prized box ls --json`. If it works, this computer is signed in: keep that a
 
 Then run `prized box ls --json` again. If it fails with any other code, tell the user what it says.
 
+If `PRIZED_API_KEY` is set in the shell, every `prized` command uses that key instead of the login, and `prized login` does not change that. Boxes need a key with Full access or Boxes: Write, so a key made for Sandboxes only cannot drive them. If box commands are refused for that reason, tell the user rather than unsetting the variable or handling the key yourself.
+
 ## 3. A box
 
 `prized box ls --json` lists their boxes with `hostname`, `observedState`, `tier` (its size) and `autoPauseMin`. If there is none, ask, then run `prized box new --wait --json`. Add `--size <size>` only for the size the user picked. Sizes, smallest first: Nano (`nano`), Micro (`micro`), Extra Small (`lite`), Small (`flow`), Medium (`pro`), Large (`max`), Extra Large (`ultra`). If the account cannot run a size, the CLI refuses with a hint: relay it.
@@ -46,11 +48,11 @@ With several boxes, ask which one, then name it in every command after: as the a
 Add `--no-advisor` to every `prized setup` and `prized env` command: otherwise setup sends the project's manifests (README, Makefile, package.json and the like, secrets redacted) to Prized's advisor to tailor its questions.
 
 1. Run `prized setup --dry-run --json --non-interactive --no-advisor --copy-once .` in the project. It changes nothing, and its `login` step names the account. If it refuses this folder (exit 2), use `--no-project` in place of `--copy-once .`.
-2. Ask in one message: may you copy this project to the box once, with no sync (name the account and the box)? Copy Codex's settings and MCP servers there (`--agent codex`)? Their GitHub CLI token and git identity (`--gh`)? For their toolchain, run `prized env plan --json --no-advisor` and read them the groups; the ones they pick go in `--env <groups>`. Never copy a home folder, the Desktop or a folder inside `~/Prized`.
-3. Run setup once, with a flag for every answer: `--agent codex` or `--no-agents`, `--gh` or `--no-gh`, `--env <groups>` or `--no-env`. For example, a yes to the copy and no to the rest is `prized setup --json --non-interactive --no-advisor --copy-once . --no-agents --no-gh --no-env`. It copies the project to `~/code/<folder>` on the box (`.git` included; `node_modules`, virtualenvs, build caches and `.env` files stay here). Before running the project's tests there, install its dependencies on the box: `--env node` or `--env python` does it from a lockfile, or run the install with `prized exec`.
-4. Read `steps[]` in the JSON: each step has a `status` of `done`, `skipped` or `failed` and a `detail`. The `project` step's detail names the folder on the box; a `failed` one carries a hint to relay. A ChatGPT sign-in never travels to the box. If the agents step reports codex as `manual`, Codex is not signed in on the box: the user runs `prized agents handoff codex` in their own terminal (it opens the sign-in page in their browser), or `prized ssh`, then `codex login --device-auth` on the box, once.
+2. Ask in one message: may you copy this project to the box once, with no sync (name the account and the box)? Copy Codex's sign-in, MCP servers and settings there (`--agent codex`; an API-key sign-in is copied as is, while a ChatGPT sign-in never travels and the box signs in through their browser instead)? Their GitHub CLI token and git identity (`--gh`)? For their toolchain, run `prized env plan --json --no-advisor` and read them the groups; the ones they pick go in `--env <groups>`. Never copy a home folder, the Desktop or a folder inside `~/Prized`.
+3. Run setup once, with a flag for every answer: `--agent codex` or `--no-agents`, `--gh` or `--no-gh`, `--env <groups>` or `--no-env`. For example, a yes to the copy and no to the rest is `prized setup --json --non-interactive --no-advisor --copy-once . --no-agents --no-gh --no-env`. It copies the project to `~/code/<folder>` on the box (`.git` included; `node_modules`, virtualenvs, build caches and `.env` files stay here). The project's `.env` files go only with `--env-secrets`, its own yes. Before running the project's tests there, install its dependencies on the box: `--env node` or `--env python` does it from a lockfile, or run the install with `prized exec`.
+4. Read `steps[]` in the JSON: each step has a `status` of `done`, `skipped` or `failed` and a `detail`. The `project` step's detail names the folder on the box; a `failed` one carries a hint to relay. If the agents step reports codex as `manual`, Codex is not signed in on the box: the user runs `prized agents handoff codex` in their own terminal (it opens the sign-in page in their browser), or `prized ssh`, then `codex login --device-auth` on the box, once.
 
-To work on the box from the ChatGPT desktop app on a Mac, the user opens Settings > Connections, clicks Add under SSH connections from this Mac, and ticks the box; projects are in `~/code` (https://prized.dev/docs/codex.md).
+To chat with Codex on the box from the ChatGPT desktop app on a Mac, the user opens Settings > Connections, clicks Add under SSH connections from this Mac, and ticks the box; projects are in `~/code`, and `prized setup --agent chatgpt` signs Codex in there if setup skipped it (https://prized.dev/docs/codex.md). Those chats are driven from the Mac and stop when it sleeps: for work that goes on with the laptop closed, use step 5.
 
 ## 5. Run Codex or a long job there
 
@@ -73,10 +75,10 @@ To work on the box from the ChatGPT desktop app on a Mac, the user opens Setting
 ## 7. Pause, resume and resize
 
 - `prized box pause <box> --json`: compute stops, the disk stays, billing drops to the asleep rate. `prized box ls --json` shows `observedState` `suspended` once it has finished. Nano through Small keep their running processes through a pause; Medium and up restart them.
-- `prized box resume <box> --wait --json` wakes it. `prized ssh`, `prized exec` and `prized prompt` also wake a paused box.
-- Auto-pause: a box pauses itself after sitting idle for its window. Set it with `prized box auto-pause <box> 2h` (30m to 7d) or `off`. Some accounts cap the window at 12 hours, and the CLI says so. Codex printing in its session, a `prized prompt` run and a `--keep-awake` job count as use.
+- `prized box resume <box> --wait --json` wakes it, and billing at the awake rate starts again. `prized ssh`, `prized exec` and `prized prompt` also wake a paused box, so tell the user and ask before running them on one.
+- Auto-pause: a box pauses itself after sitting idle for its window. Set it with `prized box auto-pause <box> 2h` (30m to 7d) or `off`. Codex printing in its session, a `prized prompt` run and a `--keep-awake` job count as use. On an account with no plan and nothing paid in, the window defaults to 2 hours, `off` or anything over 12 hours runs as 12 hours, a box never auto-pauses in its first 24 hours, and a coding agent's own screen stops counting as use after 4 hours as the only sign of use. A pause deadline or an empty balance still pauses a box.
 - Resize, only on the user's yes, since it changes what the box costs: `prized box resize <box> <size> --json`. The box restarts at the new size with its files intact, so running processes stop. Disks grow with a bigger size and never shrink. A refusal exits 5 with a hint: relay it.
 
 ## 8. Delete, only when asked
 
-`prized box delete <box> -y --json` deletes the machine and its disk. For 7 days its last state can usually be restored. Confirm the box's name with the user first.
+`prized box delete <box> -y --json` deletes the machine and its disk. For 7 days it can usually be restored, but not a box deleted within an hour of being created or under zero data retention. Confirm the box's name with the user first.

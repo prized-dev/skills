@@ -40,12 +40,13 @@ CATEGORIES = {"Productivity", "Creativity", "Developer Tools", "Business & Opera
 SEMVER = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
                     r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$")
 NAME_SCHEMA = re.compile(r"^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$")
-NAME_PORTAL = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
+NAME_SUBMIT = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")  # OpenAI: lowercase letters, numbers and single hyphens
 HEX = re.compile(r"^#[0-9A-Fa-f]{6}$")
 # Control characters other than tab/newline, Unicode line and paragraph separators, and
 # invisible formatting characters (OpenAI: "supported text").
 UNSUPPORTED = re.compile("[\x00-\x08\x0b-\x1f\x7f\u2028\u2029\u200b-\u200f\u202a-\u202e\u2060-\u2064\ufeff]")
 PRICE = re.compile(r"\$\s?\d")
+PROMO = re.compile(r"free (credit|trial|tier)|\btrial\b|no card|discount|promo|coupon", re.I)
 FORBIDDEN_FILES = (".app.json", ".mcp.json", "mcp.json", "hooks", ".claude-plugin", ".codex-plugin")
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".svg")
 
@@ -96,16 +97,18 @@ def check_image(root: Path, field: str, rel: object, problems: list[str]) -> Non
     data = path.read_bytes()
     if len(data) > 5 * 1024 * 1024:
         problems.append(f"{field}: {rel} is over 5 MiB")
-    if rel.lower().endswith(".png"):
-        size = png_size(data)
-        if size is None:
-            problems.append(f"{field}: {rel} is not a PNG")
-        else:
-            w, h = size
-            if w != h:
-                problems.append(f"{field}: {rel} is {w}x{h}, must be square")
-            if w < 48 or w > 4096:
-                problems.append(f"{field}: {rel} is {w}px, must be 48 to 4096")
+    if not rel.lower().endswith(".png"):
+        problems.append(f"{field}: {rel}: this check verifies PNG icons only; use a square PNG")
+        return
+    size = png_size(data)
+    if size is None:
+        problems.append(f"{field}: {rel} is not a PNG")
+        return
+    w, h = size
+    if w != h:
+        problems.append(f"{field}: {rel} is {w}x{h}, must be square")
+    if w < 48 or w > 4096:
+        problems.append(f"{field}: {rel} is {w}px, must be 48 to 4096")
 
 
 def front_matter(text: str) -> tuple[dict[str, str], str] | None:
@@ -122,7 +125,10 @@ def front_matter(text: str) -> tuple[dict[str, str], str] | None:
         key, sep, value = line.partition(":")
         if not sep:
             return None
-        fields[key.strip()] = value.strip().strip('"').strip("'")
+        value = value.strip()
+        if value[:1] in (">", "|", "[", "{", "&", "*", "!"):
+            return None  # valid YAML maybe, but not the plain one-line form this check can read
+        fields[key.strip()] = value.strip('"').strip("'")
     return fields, text[end + 4:].lstrip("-\n")
 
 
@@ -170,8 +176,8 @@ def check_skills(root: Path, plugin_name: str, problems: list[str]) -> list[str]
             problems.append(f"skills/{entry.name}/SKILL.md: OpenAI ignores `metadata`; drop it")
         if re.search(r"\bClaude\b", text):
             problems.append(f"skills/{entry.name}/SKILL.md: mentions Claude; OpenAI asks for provider-neutral skills")
-        if PRICE.search(text):
-            problems.append(f"skills/{entry.name}/SKILL.md: quotes a price; link https://prized.dev/pricing instead")
+        if PRICE.search(text) or PROMO.search(text):
+            problems.append(f"skills/{entry.name}/SKILL.md: quotes a price or an offer; link https://prized.dev/pricing instead")
         names.append(name)
     for stray in skills_dir.iterdir():
         if stray.is_file():
@@ -203,7 +209,7 @@ def check(root: Path) -> list[str]:
     for key in sorted(set(m) - ROOT_KEYS):
         problems.append(f"{key}: not allowed at the root by the Agent Plugins schema")
     name = m.get("name")
-    if not isinstance(name, str) or not (1 <= len(name) <= 64) or not NAME_SCHEMA.match(name) or not NAME_PORTAL.match(name):
+    if not isinstance(name, str) or not (1 <= len(name) <= 64) or not NAME_SCHEMA.match(name) or not NAME_SUBMIT.match(name):
         problems.append("name: lowercase letters, digits and single hyphens, at most 64 characters")
         name = str(name)
     if not isinstance(m.get("version"), str) or not SEMVER.match(m["version"]) or len(m["version"]) > 64:
@@ -226,7 +232,11 @@ def check(root: Path) -> list[str]:
     if "keywords" in m and (not isinstance(m["keywords"], list) or not all(isinstance(k, str) for k in m["keywords"])):
         problems.append("keywords: must be a list of strings")
 
-    ext = (m.get("extensions") or {}).get("com.openai")
+    extensions = m.get("extensions") or {}
+    if not isinstance(extensions, dict):
+        problems.append("extensions: must be an object")
+        extensions = {}
+    ext = extensions.get("com.openai")
     if not isinstance(ext, dict):
         problems.append("extensions.com.openai: required for the ChatGPT listing")
         ext = {}
@@ -236,7 +246,10 @@ def check(root: Path) -> list[str]:
     if ext.get("requires_local_executor") is not True:
         problems.append("extensions.com.openai.requires_local_executor: must be true; the skill runs the prized CLI on the user's computer")
     review = ext.get("review") or {}
-    if isinstance(review, dict) and review.get("test_cases"):
+    if not isinstance(review, dict):
+        problems.append("extensions.com.openai.review: must be an object")
+        review = {}
+    if review.get("test_cases"):
         problems.append("extensions.com.openai.review.test_cases: only for a plugin with exactly one MCP server")
     for key in ("test_credentials", "reviewer_instructions"):
         if key in review:
@@ -292,13 +305,19 @@ def check(root: Path) -> list[str]:
             problems.append(f"interface.{field}: required")
         else:
             check_image(root, f"interface.{field}", ui[field], problems)
-    listing = " ".join(str(ui.get(f, "")) for f in ("displayName", "shortDescription", "longDescription"))
-    if PRICE.search(listing) or re.search(r"free (credit|trial)|discount|promo", listing, re.I):
+    pub = ext.get("publication") or {}
+    if not isinstance(pub, dict):
+        problems.append("extensions.com.openai.publication: must be an object")
+        pub = {}
+    listing = " ".join([str(m.get("description", "")), str(pub.get("release_notes", ""))]
+                       + [str(ui.get(f, "")) for f in ("displayName", "shortDescription", "longDescription")]
+                       + [str(x) for x in (caps if isinstance(caps, list) else [])]
+                       + [str(x) for x in (prompts if isinstance(prompts, list) else [])])
+    if PRICE.search(listing) or PROMO.search(listing):
         problems.append("interface: OpenAI does not allow prices, free trials or promotions in the listing")
     if re.search(r"\b(MCP|Plugin)\b", str(ui.get("displayName", ""))):
         problems.append("interface.displayName: do not append MCP or Plugin to the name")
 
-    pub = ext.get("publication") or {}
     if "release_notes" in pub and (not isinstance(pub["release_notes"], str) or not pub["release_notes"].strip()):
         problems.append("publication.release_notes: must be non-empty text")
 
@@ -307,7 +326,8 @@ def check(root: Path) -> list[str]:
 
 
 def build_zip(root: Path, out: Path) -> int:
-    files = sorted(p for p in root.rglob("*") if p.is_file() and "__pycache__" not in p.parts
+    files = sorted(p for p in root.rglob("*") if p.is_file() and not p.is_symlink()
+                   and "__pycache__" not in p.parts and p.suffix != ".zip"
                    and p.name != ".DS_Store" and p.relative_to(root).as_posix() != "README.md")
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         for path in files:
