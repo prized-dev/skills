@@ -2,15 +2,17 @@
 
 Issues and pull requests are welcome.
 
-## The skills
+## The plugin
 
-The plugin is in `plugins/prized/`. `plugins/prized/skills/prized-boxes` is maintained in this repo: pull requests are welcome.
+The plugin is `plugins/prized/`: its manifests (`.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`, the portable `plugin.json`), its two skills, icon, README and license. `.claude-plugin/marketplace.json` at the root lists it. Pull requests are welcome for all of it and for `.github/`.
 
-`plugins/prized/skills/prized-sandboxes` is a mirror of the skill prized.dev publishes, updated every hour by the Sync skill workflow, so a pull request that edits it would be overwritten. The mirror leaves out the skill's scripts: Claude's plugin directory takes only Markdown, text, JSON, YAML and images from an organization it hasn't verified, so keep `plugins/prized/` to those (a test checks it). For a fix or a request to it, open an issue or email team@prized.dev.
+Both skills are maintained here, written for Claude Code and the `prized` CLI. Keep them short and send Claude to Prized's docs for what changes (prices, limits, API routes). Claude's plugin directory holds or blocks a plugin for a few patterns, and the checks below keep them out:
 
-## The plugin and the workflows
+- Only Markdown, text, JSON, YAML and images in `plugins/prized/`: no scripts, and nothing starting with `#!`.
+- No download piped into a shell in a skill: Claude gives the user the CLI's install line to run themselves.
+- No API key read from the user's environment, in a skill or the README: the CLI keeps the key.
 
-Pull requests are welcome for the plugin manifests (`plugins/prized/.claude-plugin/`, `plugins/prized/.cursor-plugin/`, `plugins/prized/plugin.json`), the marketplace (`.claude-plugin/marketplace.json`), the READMEs and `.github/`. Before you open one:
+Raise `version` in all three manifests with every change to the plugin, or installed copies won't update. Before you open a pull request:
 
 ```sh
 python3 -m unittest discover -s .github/scripts
