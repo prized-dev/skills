@@ -1,6 +1,6 @@
 # Prized for ChatGPT and Codex
 
-This folder is the Prized plugin for OpenAI's plugin directory, which ChatGPT and Codex share. It has one skill, `prized-boxes`: Codex puts your project on a Prized box (a cloud Linux machine that stays on), runs long jobs and Codex tasks there, and checks on, pauses, resumes and resizes the box, all through the `prized` CLI on your computer. It asks before anything that installs software, copies a file or a sign-in, or costs money.
+This folder is the Prized plugin for OpenAI's plugin directory, which ChatGPT and Codex share. It has one skill, `prized-boxes`: Codex puts your project on a Prized box (a cloud Linux machine that stays on), runs long jobs and Codex tasks there, and checks on, pauses, resumes and resizes the box, all through the `prized` CLI on your computer. You install the CLI yourself, and it asks before anything that copies a file or a sign-in, or costs money.
 
 The skill runs a local CLI, so the plugin is desktop only (`requires_local_executor`): it works in the ChatGPT desktop app's local threads and in Codex, not in ChatGPT on the web.
 
@@ -25,4 +25,4 @@ The script applies the package rules in OpenAI's [submission errors reference](h
 
 ## Keep it in step
 
-`skills/prized-boxes/SKILL.md` here is the Codex edition of [`../skills/prized-boxes`](../skills/prized-boxes/SKILL.md), the Claude Code skill. A change to one usually belongs in both. This edition differs on purpose: it names Codex, not Claude Code; the user signs up and runs `prized login` themselves (the skill never asks for a sign-in code); it quotes no prices and links the [pricing page](https://prized.dev/pricing) instead; and it covers resizing a box and the ChatGPT app's SSH connection. Raise `version` in `plugin.json` with every change, since a new upload needs a new version.
+`skills/prized-boxes/SKILL.md` here is the Codex edition of [`../plugins/prized/skills/prized-boxes`](../plugins/prized/skills/prized-boxes/SKILL.md), the Claude Code skill. A change to one usually belongs in both. This edition differs on purpose: it names Codex, not Claude Code; the user signs up and runs `prized login` themselves (the skill never asks for a sign-in code); it quotes no prices and links the [pricing page](https://prized.dev/pricing) instead; and it covers resizing a box and the ChatGPT app's SSH connection. Raise `version` in `plugin.json` with every change, since a new upload needs a new version.

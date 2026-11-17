@@ -9,8 +9,8 @@
   "plugins": [
     {
       "name": "prized",
-      "source": "./",
-      "description": "Give Claude Code a cloud dev box: it copies your project to a Prized box, a Linux machine that stays on, and keeps working there with your laptop closed. Also runs code in Prized Sandboxes, Linux microVMs.",
+      "source": "./plugins/prized",
+      "description": "Give Claude Code computers in the cloud: it puts your project on a Prized box, a Linux machine that stays on, and keeps working there with your laptop closed, and it runs code, tests and agents in Prized Sandboxes, microVMs that start in seconds.",
       "category": "development",
       "tags": [
         "cloud-dev-box",

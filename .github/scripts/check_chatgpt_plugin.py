@@ -10,8 +10,11 @@ shows up here first:
   https://developers.openai.com/plugins/deploy/desktop-only
   https://agent-plugins.org/schemas/1.0.0/plugin.schema.json
 
-It also enforces two rules of our own: the skill stays provider-neutral (no
-"Claude"), and nothing in the package quotes a price.
+It also enforces rules of our own: the skill stays provider-neutral (no
+"Claude"), nothing in the package quotes a price, and the package keeps out
+what the Claude plugin keeps out (.github/scripts/test_plugin.py): scripts and
+other non-text files, a download piped into a shell, and an API key read from
+the environment.
 
   python3 .github/scripts/check_chatgpt_plugin.py chatgpt
   python3 .github/scripts/check_chatgpt_plugin.py chatgpt --zip prized-chatgpt.zip
@@ -49,6 +52,12 @@ PRICE = re.compile(r"\$\s?\d")
 PROMO = re.compile(r"free (credit|trial|tier)|\btrial\b|no card|discount|promo|coupon", re.I)
 FORBIDDEN_FILES = (".app.json", ".mcp.json", "mcp.json", "hooks", ".claude-plugin", ".codex-plugin")
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".svg")
+# Text and images only: no scripts or programs in the package.
+ACCEPTED = (".md", ".txt", ".json", ".yaml", ".yml", ".png", ".jpg", ".jpeg", ".gif", ".webp")
+# A download piped into a shell: the user runs the CLI's installer themselves.
+PIPE_TO_SHELL = re.compile(r"\b(curl|wget|irm|iwr|Invoke-RestMethod|Invoke-WebRequest)\b[^\n`]*\|\s*(sh|bash|zsh|iex|Invoke-Expression)\b", re.I)
+# Reading a key from the user's environment: the CLI keeps the key; the skill never reads it.
+ENV_KEY = re.compile(r"PRIZED_API_KEY|\$\{?[A-Z0-9_]*(API_KEY|TOKEN|SECRET)\b")
 
 
 def text_ok(value: str, one_line: bool) -> bool:
@@ -178,6 +187,8 @@ def check_skills(root: Path, plugin_name: str, problems: list[str]) -> list[str]
             problems.append(f"skills/{entry.name}/SKILL.md: mentions Claude; OpenAI asks for provider-neutral skills")
         if PRICE.search(text) or PROMO.search(text):
             problems.append(f"skills/{entry.name}/SKILL.md: quotes a price or an offer; link https://prized.dev/pricing instead")
+        if PIPE_TO_SHELL.search(text):
+            problems.append(f"skills/{entry.name}/SKILL.md: pipes a download into a shell; give the user the install line to run instead")
         names.append(name)
     for stray in skills_dir.iterdir():
         if stray.is_file():
@@ -198,6 +209,13 @@ def check(root: Path) -> list[str]:
         return [f"plugin.json: not valid JSON ({e})"]
     if not isinstance(m, dict):
         return ["plugin.json: must be a JSON object"]
+
+    for path in sorted(p for p in root.rglob("*") if p.is_file()):
+        rel = path.relative_to(root).as_posix()
+        if not rel.lower().endswith(ACCEPTED) or path.read_bytes().startswith(b"#!"):
+            problems.append(f"{rel}: only text and images in the package, no scripts")
+        elif rel.endswith((".md", ".json")) and ENV_KEY.search(path.read_text(encoding="utf-8", errors="replace")):
+            problems.append(f"{rel}: reads a key from the environment; the CLI keeps the key")
 
     for name in FORBIDDEN_FILES:
         if (root / name).exists():

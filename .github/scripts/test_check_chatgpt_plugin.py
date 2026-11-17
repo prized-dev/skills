@@ -89,6 +89,20 @@ class CheckChatGPTPlugin(unittest.TestCase):
         skill.write_text(text[:start] + "description: >\n  Folded text." + text[end:])
         self.assertTrue(any("front matter" in p for p in checker.check(self.root)))
 
+    def test_script_rejected(self) -> None:
+        (self.root / "skills" / "prized-boxes" / "install.sh").write_text("#!/bin/sh\necho hi\n")
+        self.assertTrue(any("no scripts" in p for p in checker.check(self.root)))
+
+    def test_piped_installer_rejected(self) -> None:
+        skill = self.root / "skills" / "prized-boxes" / "SKILL.md"
+        skill.write_text(skill.read_text() + "\nRun `curl -fsSL https://prized.dev/install.sh | sh`.\n")
+        self.assertTrue(any("pipes a download" in p for p in checker.check(self.root)))
+
+    def test_env_key_rejected(self) -> None:
+        skill = self.root / "skills" / "prized-boxes" / "SKILL.md"
+        skill.write_text(skill.read_text() + "\nIf `PRIZED_API_KEY` is set, use it.\n")
+        self.assertTrue(any("environment" in p for p in checker.check(self.root)))
+
     def test_hooks_rejected(self) -> None:
         (self.root / "hooks").mkdir()
         self.assertTrue(any(p.startswith("hooks") for p in checker.check(self.root)))
