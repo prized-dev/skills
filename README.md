@@ -34,6 +34,10 @@ Claude installs the `prized` CLI if you don't have it, has you run `prized login
 
 New accounts get free credit, with no card. Boxes bill by the hour while awake and only for their disk while paused. Prices are on the [pricing page](https://prized.dev/pricing). Guides: [Claude Code on a box](https://prized.dev/claude-code), [Keep Claude Code running with your laptop closed](https://prized.dev/docs/keep-claude-code-running).
 
+## ChatGPT and Codex
+
+[`chatgpt/`](chatgpt/) is the same boxes skill packaged for OpenAI's plugin directory, which ChatGPT and Codex share, with Codex in place of Claude Code. It is desktop only: it runs the `prized` CLI in a local thread.
+
 ## Sandboxes
 
 The sandbox skill's code reads an API key from `PRIZED_API_KEY`. Make one with Sandboxes: Write on the [API keys page](https://prized.dev/dashboard/workspace/api-keys) and export it in the shell you start Claude Code from. Then ask Claude to run `python3 --version` in a Prized sandbox: it creates a sandbox, prints `Python 3.12.3` and deletes it. Guide: [Use Prized from your coding agent](https://prized.dev/docs/sandboxes-coding-agents).

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "prized",
+  "version": "1.0.0",
+  "description": "Give Codex a cloud dev box: it copies your project to a Prized box, a Linux machine that stays on, and keeps working there with your laptop closed. Runs the prized CLI on your computer.",
+  "author": {
+    "name": "Prized",
+    "email": "team@prized.dev",
+    "url": "https://prized.dev"
+  },
+  "homepage": "https://prized.dev/codex",
+  "repository": "https://github.com/prized-dev/skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "prized",
+    "cloud-dev-box",
+    "box",
+    "remote-dev",
+    "cloud-vm",
+    "background-agents",
+    "long-running",
+    "codex"
+  ],
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true,
+      "interface": {
+        "displayName": "Prized",
+        "shortDescription": "Cloud dev boxes for agents",
+        "longDescription": "Prized gives your coding agent a cloud dev box: a Linux machine of your own that stays on, so Codex and long jobs keep running after you close your laptop.\n\nWith this plugin, Codex uses the prized command-line tool on your computer to:\n- start a box, or pick one of the boxes on your Prized account\n- copy your project to the box once, with no sync, and set Codex up there\n- run tests, builds and other long jobs on the box, or hand Codex a task there and walk away\n- check on the box and its jobs, and pause, resume, resize or delete a box you name\n\nIt asks you before it installs the CLI, copies your project or any sign-in, or does anything that costs money, and it acts only on the box you name.\n\nWho it is for: developers who use Codex and want it, their builds and their test runs to keep working on a machine that is always on.\n\nLimitations: desktop only. The plugin runs the prized CLI in a local thread, so it needs the ChatGPT desktop app or Codex on macOS, Linux or Windows, and a Prized account (sign up at prized.dev). It does not create or control boxes from ChatGPT on the web or on a phone. Boxes run in Prized's cloud and are billed to your Prized account; Codex itself runs on your own ChatGPT plan or OpenAI API key.",
+        "developerName": "Prized",
+        "category": "Developer Tools",
+        "capabilities": [
+          "Create a cloud dev box",
+          "Copy a project to a box",
+          "Run long jobs and Codex tasks on a box",
+          "Check, pause, resume and resize boxes"
+        ],
+        "websiteURL": "https://prized.dev",
+        "supportURL": "https://prized.dev/docs/troubleshooting",
+        "privacyPolicyURL": "https://prized.dev/privacy",
+        "termsOfServiceURL": "https://prized.dev/terms",
+        "defaultPrompt": [
+          "Put this project on a Prized box and run its tests there.",
+          "Keep working on this task on my Prized box while my laptop is closed.",
+          "Is my Prized box running, and is the job on it done?"
+        ],
+        "brandColor": "#0047D8",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/icon.png"
+      },
+      "publication": {
+        "release_notes": "First release: the prized-boxes skill, which has Codex create a Prized box, copy the project to it once, run long jobs and Codex tasks there, and check on, pause, resume and resize the box."
+      }
+    }
+  }
+}

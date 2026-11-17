@@ -47,6 +47,10 @@ jobs:
       - name: Sync script tests
         run: python3 -m unittest discover -s .github/scripts
 
+      # chatgpt/ is the ChatGPT and Codex plugin: OpenAI's documented package rules, offline.
+      - name: ChatGPT plugin
+        run: python3 .github/scripts/check_chatgpt_plugin.py chatgpt
+
       - name: Claude Code plugin and marketplace
         run: npx -y @anthropic-ai/claude-code@2.1.310 plugin validate --strict .
 
