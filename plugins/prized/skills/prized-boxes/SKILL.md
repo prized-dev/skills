@@ -15,7 +15,7 @@ A box is a cloud Linux machine of the user's own (sudo, its own disk, no maximum
 
 ## Rules
 
-- Ask the user before you install the CLI, create or resize a box (both cost money), copy the project, or copy any credential. Pass only the flags they said yes to.
+- Ask the user before you create or resize a box (both cost money), copy the project, or copy any credential. Pass only the flags they said yes to.
 - Copy, never move or delete their files. The project goes to the box once, one way (`--copy-once`). Start a sync only if they ask for one.
 - Never run `prized login` over a sign-in that works, and never switch the account this machine uses.
 - Never print, log or commit a key, never put one on a command line, and never read `~/.config/prized`.
@@ -26,11 +26,11 @@ A box is a cloud Linux machine of the user's own (sudo, its own disk, no maximum
 
 ## The key, and where it goes
 
-The CLI signs in with a Prized API key. `prized login` (the user, in a browser) or the email sign-up at https://prized.dev/auth.md saves it under `~/.config/prized`; if `PRIZED_API_KEY` is set in the shell, every `prized` command uses that key instead. The CLI sends the key to Prized's API at `api.prized.dev`. You never handle the key yourself. A key made for Sandboxes only cannot create boxes: boxes need Full access or Boxes: Write. If a box command is refused for that reason, tell the user rather than unsetting the variable.
+The CLI signs in with a Prized API key. `prized login` (the user, in a browser) or the email sign-up at https://prized.dev/auth.md saves it under `~/.config/prized`, and the CLI sends it only to Prized's API at `api.prized.dev`. You never handle the key yourself. A key made for Sandboxes only cannot create boxes: boxes need Full access or Boxes: Write. If a box command is refused for that reason, tell the user; `prized login` makes a key that can.
 
 ## 1. Install the CLI
 
-If `prized version` fails, ask, then run `curl -fsSL https://prized.dev/install.sh | sh` (Windows: `powershell -c "irm https://prized.dev/install.ps1 | iex"`). The installer adds the CLI to PATH for new terminals, not for this session: if `prized` is still not found, write it as the full path the installer printed (usually `~/.local/bin/prized`) in every command after. Don't start commands with `export PATH=...`: Claude Code then asks the user to approve each one separately, with no way to say yes once. Below v0.21.12, ask, then run `prized update`.
+If `prized version` fails, ask the user to install the CLI themselves. Read https://prized.dev/docs/quickstart.md#2-install-the-cli and give them the exact install line for their system, ready to paste, and say they can run it in a terminal, or here by typing it after an exclamation mark, as `! <the line>`. Don't run the installer yourself. The installer adds the CLI to PATH for new terminals, not for this session: if `prized` is still not found, write it as the full path the installer printed (usually `~/.local/bin/prized`) in every command after, spelled out each time rather than kept in a shell variable. Don't start commands with `export PATH=...`: Claude Code then asks the user to approve each one separately, with no way to say yes once. Below v0.21.12, ask, then run `prized update`.
 
 ## 2. Sign in
 

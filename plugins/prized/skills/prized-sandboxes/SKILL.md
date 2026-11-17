@@ -1,43 +1,74 @@
 ---
 name: prized-sandboxes
-description: Run code, shell commands and coding agents on Prized, with Sandboxes (isolated Firecracker microVMs created from the Python or TypeScript SDK, plain HTTPS or the `prized` CLI, with pause/resume and fork) and Boxes (cloud Linux machines that stay on). Use when the user wants to run untrusted, user-submitted or AI-generated code in a cloud sandbox, from their machine or an app's backend (instead of subprocess or exec on a server), add a code-execution tool to an agent, give an agent its own Linux VM or a remote machine to work on, keep Claude Code or Codex running overnight or with the laptop closed, run tests or evals in clean throwaway machines or in N parallel sandboxes, fan one setup out into parallel copies, move code off E2B, or mentions Prized, prized.dev, PRIZED_API_KEY or `prized sandbox`. Applies even when no provider is named.
-compatibility: Needs internet access to api.prized.dev and a PRIZED_API_KEY (starts with dcp_). Use the prized CLI v0.21+, the Python SDK (Python 3.10+) or TypeScript SDK (Node 18+), curl and jq, Python 3.8+ (3.9+ for the E2B adapter; standard library only), Node 18+ for the TypeScript E2B adapter, or any HTTP client.
+description: Run code, shell commands, tests and coding agents in Prized Sandboxes, isolated Linux microVMs that start in seconds, bill per second and are deleted when the job is done, through the prized CLI (create, exec, cp, fork, pause, resume, ports). Use when the user wants to run untrusted, user-submitted or AI-generated code somewhere other than their machine, run tests or evals in clean throwaway machines or in N parallel copies, fan one setup out with fork, try something on a fresh Linux machine, give an agent its own short-lived VM, build sandboxes into their app with Prized's Python or TypeScript SDK, move code off E2B, or mentions Prized Sandboxes, prized.dev or `prized sandbox`.
+compatibility: Needs the prized CLI v0.21.12 or later (macOS, Linux or Windows) signed in to a Prized account, and internet access to api.prized.dev.
 metadata:
   homepage: https://prized.dev/sandboxes
   docs: https://prized.dev/docs/sandboxes.md
-  api: https://prized.dev/docs/sandboxes-api.md
+  pricing: https://prized.dev/pricing.md
   llms: https://prized.dev/llms.txt
 ---
 
 # Prized Sandboxes
 
-A sandbox is a Linux microVM (Ubuntu 24.04, user `prized`, no sudo) that your code creates, runs commands and moves files in, then deletes. It is billed per second, and runs 24 hours by default, up to 7 days (60 minutes on the free tier). The docs are the source of truth: https://prized.dev/llms.txt
+A sandbox is a Linux microVM (Ubuntu 24.04, user `prized`, no sudo) that starts from a template in seconds, runs commands and moves files, and is deleted when the job is done. It bills per second while it runs and only for storage while paused. It runs 24 hours by default and up to 7 days (60 minutes on the free tier), then it is deleted. The docs are the source of truth: https://prized.dev/llms.txt lists every page, and adding `.md` to a docs URL gives its Markdown.
 
-## 1. The key
+## Rules
 
-Look for `PRIZED_API_KEY` in the environment or a gitignored `.env`. It starts with `dcp_`. If it is missing but `prized sandbox ls` works, this machine's CLI is signed in (an agent sign-up saves its key there): tell your person, then use the `prized sandbox` commands. Code (the helper, the raw calls below) reads only `PRIZED_API_KEY`, so for code ask for a key as below. Otherwise stop and ask the user:
+- Ask the user before you install the CLI, and before the first sandbox you start in a conversation: say the template, the size if not the default, and how long it may run. Sandboxes cost money.
+- Give every sandbox `--max-runtime` for the job, and delete it when the job is done, even when the job failed (`prized sandbox rm <id> -y`). For several, give them one `--label run=<name>` and delete them together with `prized sandbox rm --label run=<name> -y`.
+- Never print, log or commit a key, never put one on a command line, and never read `~/.config/prized`. Never pass the user's own secrets (their API keys, tokens, `.env` values) into a sandbox unless they ask you to, and then ask how.
+- Act only on sandboxes you created in this conversation or the user named. `prized sandbox ls` shows every sandbox in the workspace, including other people's and their apps'.
+- Quote prices only from https://prized.dev/pricing.md, read at the time, never from memory.
+- Add `--json` to `prized` commands when you parse the output: each prints one JSON object with an `ok` field, and failures carry `error.code` and a `hint` to relay (codes: https://prized.dev/docs/cli.md#for-agents-and-scripts).
 
-> I need a Prized API key. Make one at https://prized.dev/dashboard/workspace/api-keys with Full access, or Custom with Sandboxes: Write. New to Prized? https://prized.dev/onboarding/sandboxes signs you up with free credit and no card. Then run `export PRIZED_API_KEY=dcp_...`
->
-> No account yet? I can make one for you: tell me your email address, then the 6-digit code Prized sends you.
+## 1. The CLI and the sign-in
 
-If the user has no account and asks you to make one, follow https://prized.dev/auth.md (their email address plus the 6-digit code Prized sends them). It saves the key with `prized login`, not in `PRIZED_API_KEY`, so after it use the `prized sandbox` commands, which read that login; the helper and the raw calls below read `PRIZED_API_KEY` only. Never put the key in source, command arguments or logs. Pass secrets a sandbox needs in `envVars` at create (stored encrypted, never returned), not inside commands.
+Run `prized sandbox ls --json`.
 
-## 2. Verify with one real run
+- `prized` not found: ask the user to install the CLI themselves. Read https://prized.dev/docs/quickstart.md#2-install-the-cli and give them the exact install line for their system, ready to paste, and say they can run it in a terminal, or here by typing it after an exclamation mark, as `! <the line>`. Don't run the installer yourself. The installer adds the CLI to PATH for new terminals, not for this session: if `prized` is still not found, write it as the full path the installer printed (usually `~/.local/bin/prized`) in every command after, spelled out each time rather than kept in a shell variable, rather than starting commands with `export PATH=...`, which makes Claude Code ask about each one separately. Below v0.21.12, ask, then run `prized update`.
+- It works: this machine is signed in. Keep that account and never run `prized login` over it.
+- It fails with `AUTH`: ask whether the user has a Prized account. If they do, they run `prized login` in a terminal (or `! prized login` here) and tell you when it has finished. If they don't, ask for their email address and follow https://prized.dev/auth.md, its From a shell part: Prized emails them a 6-digit code, they give it to you, and the CLI saves the key without it showing in your output. A new account comes with free credit and no card.
 
-From a shell (install the CLI with `curl -fsSL https://prized.dev/install.sh | sh`; it uses `PRIZED_API_KEY` when set):
+The sign-in is shared with Prized boxes (the prized-boxes skill). A key made for Sandboxes only reaches sandboxes; if a box command is refused for that, say so.
+
+## 2. One real run first
 
 ```bash
-ID=$(prized sandbox create --max-runtime 30m)   # prints the id once it is running
-prized sandbox exec "$ID" -- python3 --version  # exits with the command's exit code
-prized sandbox rm "$ID" -y
+prized sandbox create --max-runtime 30m --json      # waits until it is running; read the id (sbx_...)
+prized sandbox exec <id> -- python3 --version       # exits with the command's exit code
+prized sandbox rm <id> -y
 ```
 
-Pass: `Python 3.12.3`, then the delete. Do nothing else until this works.
+It prints `Python 3.12.3`. Do the user's job once this works.
 
-## 3. From code
+## 3. Run the job
 
-The SDK is the shortest path: `pip install prized` (Python 3.10 or later) or `npm i @prized/sdk` (Node 18 or later; the unscoped npm package `prized` is the CLI installer), at https://prized.dev/docs/sandboxes-python-typescript.md:
+| What | Command |
+| --- | --- |
+| Start one | `prized sandbox create --max-runtime 1h [--template <t>] [--vcpu N] [--memory 16] [--disk 30] [--label run=<name>] --json` |
+| Run a command | `prized sandbox exec <id> [--cwd <dir>] -- '<shell line>'` (5 minute timeout by default, `--timeout 1h` at most; exit 124 on a timeout) |
+| A long job | `prized sandbox exec <id> --detach --keep-awake -- '<shell line>'` returns a process id; `--status <pid>`, `--logs <pid>`, `--follow <pid>`, `--ps`, `--kill <pid>` |
+| Copy a file in or out | `prized sandbox cp ./data.csv <id>:data.csv`, `prized sandbox cp <id>:out/report.json ./report.json` |
+| Parallel copies | `prized sandbox fork <id> --count 4 --label run=<name> --json` (from a running or paused sandbox; prints the copies' ids) |
+| Reach a server in it | `prized sandbox port <id> 8000` prints its https URL; `--token` adds a short-lived token for a browser tab |
+| A shell for the user | give them `prized sandbox ssh <id>` |
+| Pause, resume | `prized sandbox pause <id>`, `prized sandbox resume <id>` (paused, it keeps memory and disk and bills only storage) |
+| More time | `prized sandbox extend <id> --by 2h`, or `prized sandbox timeout <id> --in 30m` |
+| What's running | `prized sandbox ls --label run=<name> --json`, `prized sandbox get <id> --json` (`expiresAt` is when it will be deleted) |
+
+What agents get wrong:
+
+- `exec` runs what follows `--` with `bash -c` in `/home/prized/work`, so pass a shell line as one quoted string. Paths are under `/home/prized`. There is no root, so no `apt`; `pip install` and `npm install -g` go to `~/.local`.
+- A failed command is still a finished command: read its exit code and both stdout and stderr (many test runners report on stderr).
+- A relative path, in `cp`'s `<id>:<path>` or in a command, is under `/home/prized/work`. Files move one at a time, up to 100 MB each. For a folder, `tar` it here, copy the archive in, and untar it with an `exec`. For a git project, cloning inside the sandbox is often simpler.
+- Templates (`prized sandbox templates`): `prized-base-v1` (Python 3, Node 22, git, build tools; the default), `prized-agent-v1` (adds Claude Code and Codex, which need their own sign-in or key: ask the user how before you run an agent in it), and `prized-docker-v1` (adds Docker and Compose; needs a paid workspace, give it `--disk 30`).
+- The free tier (free credit only) allows 2 vCPU and 4 GB per sandbox, 10 sandboxes and 60 minutes of running each. An error that says `"tier": "free"` is that limit, not a bug: tell the user a plan or a top-up lifts it, and never pick one or pay for them. Docker on free credit answers `template_needs_payment` the same way.
+- A fork that doesn't fit answers `fork_capacity` with `fits`: fork that many or fewer.
+
+## 4. From their own code
+
+When the user wants their app, service or agent to create sandboxes itself, use the SDK: `pip install prized` (Python 3.10 or later) or `npm i @prized/sdk` (Node 18 or later), as https://prized.dev/docs/sandboxes-python-typescript.md shows.
 
 ```python
 from prized import Sandbox
@@ -48,63 +79,16 @@ with Sandbox.create(max_runtime_min=30) as sb:           # deleted when the bloc
     print(r.exit_code, r.stdout)                           # 0 42
 ```
 
-With no dependency, use the HTTP API directly. For Python, copy `scripts/prized_sandbox.py` from this skill into the project (standard library only; also at https://prized.dev/skills/prized-sandboxes/scripts/prized_sandbox.py):
+The app needs an API key of its own: the user makes one at https://prized.dev/dashboard/workspace/api-keys (Full access, or Custom with Sandboxes: Write) and puts it in the app's secret settings themselves. Don't ask them to paste it into this conversation. The plain HTTP API, every route and error: https://prized.dev/docs/sandboxes-api.md. Code written for E2B: https://prized.dev/docs/moving-from-e2b.md links a drop-in adapter for Python and TypeScript and says what works differently.
 
-```python
-from prized_sandbox import Sandbox
+## When a box fits better
 
-with Sandbox.create(max_runtime_min=30) as sbx:          # deleted when the block ends
-    sbx.write("/home/prized/work/main.py", b"print(6 * 7)")
-    r = sbx.exec("python3 main.py", timeout=120)
-    print(r["exitCode"], r["stdout"])                      # 0 42
-```
-
-Python written for E2B's SDK: copy `scripts/prized_e2b.py` (Python 3.9+; also at https://prized.dev/skills/prized-sandboxes/scripts/prized_e2b.py) and change `from e2b import Sandbox` to `from prized_e2b import Sandbox`. TypeScript written for it: copy `scripts/prized-e2b.ts` (Node 18+, only `fetch`; also at https://prized.dev/skills/prized-sandboxes/scripts/prized-e2b.ts) and import `Sandbox` from `"./prized-e2b"` in place of `"e2b"`. What works differently: https://prized.dev/docs/moving-from-e2b.md
-
-For TypeScript, copy the helper on https://prized.dev/docs/sandboxes-python-typescript.md (only `fetch`). The raw calls, with `API=https://api.prized.dev/api/v1` and `Authorization: Bearer $PRIZED_API_KEY` on every request:
-
-| Step | Request |
-| --- | --- |
-| Create | `POST $API/sandboxes?wait=running` with `{"template":"prized-base-v1","maxRuntimeMin":30}`; read `sandbox.id` and `sandbox.toolboxBase` |
-| Wait | `GET $API/sandboxes/{id}` until `state` is not `starting` (a create can outlast the 8 s hold) |
-| Run | `POST {toolboxBase}/process/execute` with `{"command":"...","cwd":"/home/prized/work","env":{},"timeout":300}` |
-| Files | `POST {toolboxBase}/files/upload?path=/home/prized/work/x` (raw body); `GET {toolboxBase}/files/download?path=...` |
-| Fork | `POST $API/sandboxes/{id}/fork` with `{"count":3}`; each child starts `starting` |
-| Pause, resume | `POST $API/sandboxes/{id}/pause?wait=paused`, `.../resume?wait=running` |
-| Delete | `DELETE $API/sandboxes/{id}` |
-
-## Rules agents get wrong
-
-- **Read `toolboxBase` from the sandbox object.** Never build the edge URL yourself.
-- **A `running` sandbox takes commands at once.** Never blindly retry a command after a 502: it may have run. A 410 `sandbox_deleted` means the sandbox is gone (or going): create a new one.
-- **A failed command still answers 200.** Read `exitCode`; a timeout is `exitCode: -1, timedOut: true`. `timeout` is seconds, 300 by default, 3600 at most.
-- **Paths are absolute and under `/home/prized`.** Commands run with `bash -c` in `/home/prized/work`. No root, so no `apt`; `pip install` and `npm install -g` go to `~/.local`.
-- **Files move one at a time,** up to 100 MB each (`prized sandbox cp` or `/files/upload`). For a directory, tar it, copy the archive, and untar it with an exec.
-- **Always delete in a `finally`** (or `with`), and set `maxRuntimeMin` so a crash cannot leave a sandbox billing.
-- **Templates:** `prized-base-v1` (Python 3, Node 22, git, build tools), `prized-agent-v1` (adds Claude Code and Codex; pass their API key in `envVars`), or `prized-docker-v1` (adds Docker, Compose and Buildx, usable as `prized` without sudo; give it room with `resources.diskGb: 30`, and `apt-get install` works inside a container). Default shape 4 vCPU, 8 GB; 1 to 32 vCPU and up to 128 GB.
-- **Docker needs a paid workspace.** On free credit alone, a create, fork or resume from `prized-docker-v1` answers `402 template_needs_payment` with `billingUrl`: tell the user a plan or top-up opens it, or use the other templates. Guide: https://prized.dev/docs/sandboxes-docker.md
-- **Free tier** (free credit only): 2 vCPU and 4 GB per sandbox, 10 sandboxes, 60 minutes of running each. An error with `"tier": "free"` is that limit, not a bug: tell the user a plan or top-up lifts it.
-- **Fork** needs a `running` or `paused` parent. `409 fork_capacity` carries `fits`: fork that many or fewer.
-- **Streaming output:** the SDKs stream it (`on_stdout`, `onStdout`). The HTTP API answers when a command ends, so without an SDK, write a long job's output to a file and read it with a later exec or a download.
-- **Big output:** one exec keeps the first 4 MiB of each output stream, and `truncated` says when it cut one. For builds, test suites and logs, pass `full_output=True` (Python) or `fullOutput: true` (TypeScript): the result keeps up to 100 MiB of each stream.
-- **Prices:** read https://prized.dev/pricing, never quote them from memory.
-
-## When a box fits
-
-A sandbox is for code and agents, one job at a time, and your code deletes it. A Prized box is a cloud Linux machine with sudo and no maximum run time that keeps its disk while idle. Use a box when:
-
-- **Claude Code or Codex should keep working overnight or with the laptop closed.** It runs in a session on the box that outlives the connection. Set it up with https://prized.dev/claude-code.md or https://prized.dev/codex.md, for whichever agent will run. The guides are https://prized.dev/docs/keep-claude-code-running.md and https://prized.dev/docs/run-codex-in-the-cloud.md. On the free credit an idle box sleeps after 2 hours; the guides show how to keep it up.
-- **An agent needs a computer it comes back to,** created and driven through the API. Its files and installed packages stay, and on Nano to Small its running processes survive a pause: https://prized.dev/docs/persistent-cloud-computer.md
-- **The work needs sudo, apt, or raw TCP in,** which a sandbox cannot give (Docker runs on `prized-docker-v1` once the workspace has paid in). A sandbox port does answer HTTP and WebSockets at an https URL, for your API key, a short-lived token, or anyone once its owner makes it public, and with a token or once public its `prized.link` URL opens in a browser tab: https://prized.dev/docs/sandboxes.md#preview-a-port
-- **Your person wants their coding agent off their laptop, on a machine of its own.** Follow https://prized.dev/docs/agent-setup.md: it copies their project to the box once, with no sync, and asks before each step.
-
-A box bills by the hour while awake. On the free credit alone (no plan, no grant and nothing paid in), a box set to auto-pause off, or to a window over 12 hours, pauses after 12 hours idle, never in its first 24 hours; on a plan or after a top-up there is no limit. Ask your person before you make one, install software, or copy a project or a sign-in. Boxes and sandboxes share one workspace and balance. The key from the Sandboxes onboarding reaches sandboxes only; a box needs Full access, or Boxes: Write.
+A sandbox is for a job with an end. A Prized box is a cloud Linux machine of the user's own, with sudo and no maximum run time, that keeps its disk and comes back when they do. Use the prized-boxes skill when Claude Code or another agent should keep working overnight or with the laptop closed, when the work needs sudo, apt or raw TCP, or when the user wants a dev machine to come back to. Boxes and sandboxes share one workspace and balance.
 
 ## References
 
-- Every route, field and error code: https://prized.dev/docs/sandboxes-api.md
+- Sandboxes: https://prized.dev/docs/sandboxes.md
 - Run an AI agent's commands in a microVM: https://prized.dev/docs/sandboxes-run-agent-code.md
 - Fork a running VM to run work in parallel: https://prized.dev/docs/sandboxes-fork-parallel.md
-- Run Docker and Compose in a sandbox: https://prized.dev/docs/sandboxes-docker.md
-- Moving from E2B: https://prized.dev/docs/moving-from-e2b.md
-- CLI: `prized sandbox --help` (create, exec, cp, fork, pause, resume, rm, ls, templates)
+- Docker and Compose in a sandbox: https://prized.dev/docs/sandboxes-docker.md
+- CLI: `prized sandbox --help`, and `prized sandbox <command> --help`
