@@ -18,39 +18,41 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      # skills/prized-boxes is kept in this repo (LOCAL_SKILLS in sync_skill.py); the rest is mirrored.
+      # plugins/prized/skills/prized-boxes is kept in this repo (LOCAL_SKILLS in sync_skill.py); the rest is mirrored.
       - name: Pull requests leave the mirrored skills alone
         if: github.event_name == 'pull_request'
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          touched=$(git diff --name-only "origin/$BASE_REF...HEAD" -- skills .github/skills-source.json ':(exclude)skills/prized-boxes')
+          touched=$(git diff --name-only "origin/$BASE_REF...HEAD" -- plugins/prized/skills .github/skills-source.json ':(exclude)plugins/prized/skills/prized-boxes')
           if [ -n "$touched" ]; then
-            echo "::error::skills/ (except skills/prized-boxes) is a copy of https://prized.dev/SKILL.md and is overwritten every hour. Open an issue or email team@prized.dev with the change instead."
+            echo "::error::plugins/prized/skills/ (except prized-boxes) is a copy of https://prized.dev/SKILL.md and is overwritten every hour. Open an issue or email team@prized.dev with the change instead."
             echo "$touched"
             exit 1
           fi
 
-      - name: A change to skills/prized-boxes raises the plugin version
+      - name: A change to plugins/prized/skills/prized-boxes raises the plugin version
         if: github.event_name == 'pull_request'
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          if [ -z "$(git diff --name-only "origin/$BASE_REF...HEAD" -- skills/prized-boxes)" ]; then exit 0; fi
-          base=$(git show "origin/$BASE_REF:.claude-plugin/plugin.json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')
-          head=$(python3 -c 'import json; print(json.load(open(".claude-plugin/plugin.json"))["version"])')
+          if [ -z "$(git diff --name-only "origin/$BASE_REF...HEAD" -- plugins/prized/skills/prized-boxes)" ]; then exit 0; fi
+          base=$(git show "origin/$BASE_REF:plugins/prized/.claude-plugin/plugin.json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')
+          head=$(python3 -c 'import json; print(json.load(open("plugins/prized/.claude-plugin/plugin.json"))["version"])')
           if [ "$base" = "$head" ]; then
-            echo "::error::skills/prized-boxes changed but the version is still $head. Raise version in .claude-plugin/plugin.json, plugin.json and .cursor-plugin/plugin.json, or installed copies won't update."
+            echo "::error::plugins/prized/skills/prized-boxes changed but the version is still $head. Raise version in plugins/prized/.claude-plugin/plugin.json, plugins/prized/plugin.json and plugins/prized/.cursor-plugin/plugin.json, or installed copies won't update."
             exit 1
           fi
 
       - name: Sync script tests
         run: python3 -m unittest discover -s .github/scripts
 
-      - name: Claude Code plugin and marketplace
-        run: npx -y @anthropic-ai/claude-code@2.1.310 plugin validate --strict .
+      - name: Claude Code marketplace and plugin
+        run: |
+          npx -y @anthropic-ai/claude-code@2.1.310 plugin validate --strict .
+          npx -y @anthropic-ai/claude-code@2.1.310 plugin validate --strict plugins/prized
 
       # Informational: prized.dev can be ahead of this repo until the next hourly sync.
-      - name: skills/ matches prized.dev
+      - name: The plugin's skills match prized.dev
         continue-on-error: true
         run: python3 .github/scripts/sync_skill.py --check

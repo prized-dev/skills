@@ -1,4 +1,4 @@
-# Mirrors the skill prized.dev publishes into skills/ (see .github/scripts/sync_skill.py).
+# Mirrors the skill prized.dev publishes into plugins/prized/skills/ (see .github/scripts/sync_skill.py).
 # The skill is edited in prized-dev/doppel; after a change deploys, this picks it up
 # within the hour, or at once with: gh workflow run sync-skill.yml -R prized-dev/skills
 # A repository_dispatch of type skill-updated starts it too:
@@ -34,7 +34,9 @@ jobs:
 
       - name: Validate the plugin
         if: steps.sync.outputs.changed != ''
-        run: npx -y @anthropic-ai/claude-code@2.1.310 plugin validate --strict .
+        run: |
+          npx -y @anthropic-ai/claude-code@2.1.310 plugin validate --strict .
+          npx -y @anthropic-ai/claude-code@2.1.310 plugin validate --strict plugins/prized
 
       - name: Commit and push
         if: steps.sync.outputs.changed != ''
@@ -43,8 +45,8 @@ jobs:
           VERSION: ${{ steps.sync.outputs.version }}
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          git add -A skills .github/skills-source.json
-          for m in .claude-plugin/plugin.json plugin.json .cursor-plugin/plugin.json .codex-plugin/plugin.json; do
+          git add -A plugins/prized/skills .github/skills-source.json
+          for m in plugins/prized/.claude-plugin/plugin.json plugins/prized/plugin.json plugins/prized/.cursor-plugin/plugin.json plugins/prized/.codex-plugin/plugin.json; do
             if [ -f "$m" ]; then git add "$m"; fi
           done
           git config user.name "github-actions[bot]"
