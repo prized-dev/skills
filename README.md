@@ -28,7 +28,7 @@ codex plugin marketplace add prized-dev/skills
 codex plugin add prized@prized
 ```
 
-`npx plugins add prized-dev/skills` also gives Codex this edition.
+`npx plugins add prized-dev/skills` also gives Codex this edition, so Codex gets the boxes skill only, not the sandbox skill.
 
 ## This repository
 

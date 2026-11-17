@@ -10,8 +10,8 @@ shows up here first:
   https://developers.openai.com/plugins/deploy/desktop-only
   https://agent-plugins.org/schemas/1.0.0/plugin.schema.json
 
-It also enforces rules of our own: the skill stays provider-neutral (no
-"Claude"), nothing in the package quotes a price, and the package keeps out
+It also enforces rules of our own: the package names Codex, never Claude
+(this edition is for OpenAI's directory), nothing in the package quotes a price, and the package keeps out
 what the Claude plugin keeps out (.github/scripts/test_plugin.py): scripts and
 other non-text files, a download piped into a shell, and an API key read from
 the environment.
@@ -124,7 +124,7 @@ def front_matter(text: str) -> tuple[dict[str, str], str] | None:
     """The simple `key: value` front matter our skills use. Nested keys are skipped."""
     if not text.startswith("---\n"):
         return None
-    end = text.find("\n---", 4)
+    end = text.find("\n---\n", 3)
     if end < 0:
         return None
     fields: dict[str, str] = {}
@@ -135,8 +135,8 @@ def front_matter(text: str) -> tuple[dict[str, str], str] | None:
         if not sep:
             return None
         value = value.strip()
-        if value[:1] in (">", "|", "[", "{", "&", "*", "!"):
-            return None  # valid YAML maybe, but not the plain one-line form this check can read
+        if value[:1] in (">", "|", "[", "{", "&", "*", "!", "%", "@", "`") or ": " in value or " #" in value:
+            return None  # valid YAML maybe, or not, but not the plain one-line form this check can read
         fields[key.strip()] = value.strip('"').strip("'")
     return fields, text[end + 4:].lstrip("-\n")
 
@@ -171,8 +171,12 @@ def check_skills(root: Path, plugin_name: str, problems: list[str]) -> list[str]
         name, desc = fields.get("name", ""), fields.get("description", "")
         if not name:
             problems.append(f"skills/{entry.name}/SKILL.md: name is required")
+        elif not text_ok(name, True) or not NAME_SUBMIT.match(name) or name != entry.name:
+            problems.append(f"skills/{entry.name}/SKILL.md: name must be the directory name, in lowercase letters, digits and single hyphens")
         if not desc:
             problems.append(f"skills/{entry.name}/SKILL.md: description is required")
+        elif not text_ok(desc, True):
+            problems.append(f"skills/{entry.name}/SKILL.md: description has unsupported characters")
         elif len(desc) > 1024:
             problems.append(f"skills/{entry.name}/SKILL.md: description is {len(desc)} characters, max 1024")
         if not body.strip():
@@ -184,7 +188,7 @@ def check_skills(root: Path, plugin_name: str, problems: list[str]) -> list[str]
         if "metadata" in fields:
             problems.append(f"skills/{entry.name}/SKILL.md: OpenAI ignores `metadata`; drop it")
         if re.search(r"\bClaude\b", text):
-            problems.append(f"skills/{entry.name}/SKILL.md: mentions Claude; OpenAI asks for provider-neutral skills")
+            problems.append(f"skills/{entry.name}/SKILL.md: mentions Claude; this edition names Codex")
         if PRICE.search(text) or PROMO.search(text):
             problems.append(f"skills/{entry.name}/SKILL.md: quotes a price or an offer; link https://prized.dev/pricing instead")
         if PIPE_TO_SHELL.search(text):
@@ -210,7 +214,7 @@ def check(root: Path) -> list[str]:
     if not isinstance(m, dict):
         return ["plugin.json: must be a JSON object"]
 
-    for path in sorted(p for p in root.rglob("*") if p.is_file()):
+    for path in sorted(p for p in root.rglob("*") if p.is_file() and p.name != ".DS_Store"):
         rel = path.relative_to(root).as_posix()
         if not rel.lower().endswith(ACCEPTED) or path.read_bytes().startswith(b"#!"):
             problems.append(f"{rel}: only text and images in the package, no scripts")
@@ -333,6 +337,8 @@ def check(root: Path) -> list[str]:
                        + [str(x) for x in (prompts if isinstance(prompts, list) else [])])
     if PRICE.search(listing) or PROMO.search(listing):
         problems.append("interface: OpenAI does not allow prices, free trials or promotions in the listing")
+    if re.search(r"\bClaude\b", listing):
+        problems.append("interface: the listing mentions Claude; this edition names Codex")
     if re.search(r"\b(MCP|Plugin)\b", str(ui.get("displayName", ""))):
         problems.append("interface.displayName: do not append MCP or Plugin to the name")
 

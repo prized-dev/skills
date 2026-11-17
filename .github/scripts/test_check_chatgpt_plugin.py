@@ -103,6 +103,27 @@ class CheckChatGPTPlugin(unittest.TestCase):
         skill.write_text(skill.read_text() + "\nIf `PRIZED_API_KEY` is set, use it.\n")
         self.assertTrue(any("environment" in p for p in checker.check(self.root)))
 
+    def test_colon_in_description_rejected(self) -> None:
+        skill = self.root / "skills" / "prized-boxes" / "SKILL.md"
+        text = skill.read_text()
+        skill.write_text(text.replace("description: ", "description: Use when: ", 1))
+        self.assertTrue(any("front matter" in p for p in checker.check(self.root)))
+
+    def test_skill_name_must_match_directory(self) -> None:
+        skill = self.root / "skills" / "prized-boxes" / "SKILL.md"
+        skill.write_text(skill.read_text().replace("name: prized-boxes", "name: Prized Boxes", 1))
+        self.assertTrue(any("directory name" in p for p in checker.check(self.root)))
+
+    def test_claude_in_listing(self) -> None:
+        m = self.manifest()
+        m["extensions"]["com.openai"]["interface"]["longDescription"] += " Works with Claude too."
+        self.write(m)
+        self.assertTrue(any("mentions Claude" in p for p in checker.check(self.root)))
+
+    def test_ds_store_ignored(self) -> None:
+        (self.root / ".DS_Store").write_bytes(b"\x00\x00\x00\x01Bud1")
+        self.assertEqual(checker.check(self.root), [])
+
     def test_hooks_rejected(self) -> None:
         (self.root / "hooks").mkdir()
         self.assertTrue(any(p.startswith("hooks") for p in checker.check(self.root)))

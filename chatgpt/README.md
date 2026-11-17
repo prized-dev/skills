@@ -1,6 +1,6 @@
 # Prized for ChatGPT and Codex
 
-This folder is the Prized plugin for OpenAI's plugin directory, which ChatGPT and Codex share. It has one skill, `prized-boxes`: Codex puts your project on a Prized box (a cloud Linux machine that stays on), runs long jobs and Codex tasks there, and checks on, pauses, resumes and resizes the box, all through the `prized` CLI on your computer. You install the CLI yourself, and it asks before anything that copies a file or a sign-in, or costs money.
+This folder is the Prized plugin for OpenAI's plugin directory, which ChatGPT and Codex share. It has one skill, `prized-boxes`: Codex puts your project on a Prized box (a cloud Linux machine that stays on), runs long jobs and Codex tasks there, and checks on, pauses, resumes and resizes the box, all through the `prized` CLI on your computer. You install the CLI yourself, and Codex asks before anything that copies a file or a sign-in, or costs money.
 
 The skill runs a local CLI, so the plugin is desktop only (`requires_local_executor`): it works in the ChatGPT desktop app's local threads and in Codex, not in ChatGPT on the web.
 
