@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "prized",
-      "source": "./",
+      "source": "./plugins/prized",
       "description": "Give Claude Code a cloud dev box: it copies your project to a Prized box, a Linux machine that stays on, and keeps working there with your laptop closed. Also runs code in Prized Sandboxes, Linux microVMs.",
       "category": "development",
       "tags": [

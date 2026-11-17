@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mirror the skills prized.dev publishes into skills/<name>/ of this repo.
+"""Mirror the skills prized.dev publishes into plugins/prized/skills/<name>/ of this repo.
 
 The source of truth is the skill in prized-dev/doppel
 (controlplane/web/content/skills/). prized.dev builds it, resolves its
@@ -8,8 +8,11 @@ held passages, and publishes it for `npx skills add https://prized.dev`:
   /.well-known/agent-skills/index.json   agent-skills discovery 0.2.0
   /skills/<name>.tar.gz                  the skill folder, digest in the index
 
-This script copies exactly that publication, so this repo can never say
-more (or less) than prized.dev does. skills/ belongs to the mirror: a
+This script copies that publication, so this repo can never say more
+than prized.dev does. It writes only the files Claude's plugin directory
+accepts from an unverified organization (SHIPPED: Markdown, text, JSON,
+YAML and images, none starting with #!); a skill's scripts stay on
+prized.dev, where the skill links them. skills/ belongs to the mirror: a
 folder prized.dev doesn't publish is removed, except the skills this repo
 keeps itself (LOCAL_SKILLS, edited here by pull request). If prized.dev
 starts publishing one of those, the sync fails closed until a person picks
@@ -20,8 +23,8 @@ first: a digest mismatch, an unsafe archive, or a skill that would run
 something on its own (hooks, allowed-tools, `!` command lines), which this
 plugin's README promises it doesn't.
 
-  python3 .github/scripts/sync_skill.py           update skills/ and bump the version
-  python3 .github/scripts/sync_skill.py --check   exit 1 if skills/ differs from prized.dev
+  python3 .github/scripts/sync_skill.py           update the plugin's skills/ and bump the version
+  python3 .github/scripts/sync_skill.py --check   exit 1 if they differ from prized.dev
 
 Standard library only (Python 3.9+).
 """
@@ -46,15 +49,21 @@ SITE = "https://prized.dev"
 DISCOVERY = "/.well-known/agent-skills/index.json"
 SCHEMA = "https://schemas.agentskills.io/discovery/0.2.0/schema.json"
 LOCK = Path(".github/skills-source.json")
+# The plugin: the folder Claude Code installs and the directory checks.
+PLUGIN = Path("plugins/prized")
+SKILLS = PLUGIN / "skills"
+# The file types Claude's plugin directory accepts from an organization it
+# hasn't verified; a mirrored skill's other files (its scripts) aren't written.
+SHIPPED = (".md", ".txt", ".json", ".yaml", ".yml", ".png", ".jpg", ".jpeg", ".gif", ".webp")
 # Skills kept in this repo rather than mirrored: the sync leaves their folders
 # alone, and the Validate workflow lets pull requests edit them.
 LOCAL_SKILLS = ("prized-boxes",)
 # Every manifest that carries the plugin's version; they move together.
 MANIFESTS = [
-    Path(".claude-plugin/plugin.json"),
-    Path("plugin.json"),
-    Path(".cursor-plugin/plugin.json"),
-    Path(".codex-plugin/plugin.json"),
+    PLUGIN / ".claude-plugin/plugin.json",
+    PLUGIN / "plugin.json",
+    PLUGIN / ".cursor-plugin/plugin.json",
+    PLUGIN / ".codex-plugin/plugin.json",
 ]
 
 NAME_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$")
@@ -167,6 +176,11 @@ def skill_files(name: str, archive: bytes) -> dict[str, bytes]:
     return files
 
 
+def shipped(files: dict[str, bytes]) -> dict[str, bytes]:
+    """The files the plugin carries: the directory's accepted types, no #! scripts."""
+    return {p: d for p, d in files.items() if p.lower().endswith(SHIPPED) and not d.startswith(b"#!")}
+
+
 def published(site: str) -> dict[str, dict]:
     """{name: {"digest", "files"}} for every archive skill prized.dev lists."""
     index_url = site + DISCOVERY
@@ -226,12 +240,12 @@ def plan_bump(root: Path) -> tuple[str, dict[Path, str]]:
 
 def write_skills(root: Path, skills: dict[str, dict], remove: list[str]) -> None:
     """Stage every changed skill in a temp folder first, then swap folders in."""
-    base = root / "skills"
-    base.mkdir(exist_ok=True)
+    base = root / SKILLS
+    base.mkdir(parents=True, exist_ok=True)
     stage = Path(tempfile.mkdtemp(prefix=".sync-", dir=base))
     try:
         for name, skill in skills.items():
-            for rel, data in skill["files"].items():
+            for rel, data in shipped(skill["files"]).items():
                 dest = stage / name / rel
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 dest.write_bytes(data)
@@ -262,19 +276,19 @@ def main() -> int:
     clash = sorted(set(skills) & set(LOCAL_SKILLS))
     if clash:
         raise SyncError(f"prized.dev now publishes {clash}, which this repo keeps itself (LOCAL_SKILLS); pick one source first")
-    base = root / "skills"
+    base = root / SKILLS
     present = sorted(p.name for p in base.iterdir() if p.is_dir() and not p.name.startswith(".")) if base.is_dir() else []
-    changed_skills = {n: s for n, s in sorted(skills.items()) if local_files(base / n) != s["files"]}
+    changed_skills = {n: s for n, s in sorted(skills.items()) if local_files(base / n) != shipped(s["files"])}
     extra = [n for n in present if n not in skills and n not in LOCAL_SKILLS]
     changed = [f"{n} ({s['digest'][:19]})" for n, s in changed_skills.items()]
     changed += [f"{n!r} (not published, removed)" for n in extra]
 
     if args.check:
         if changed:
-            print("skills/ differs from " + site + ": " + ", ".join(changed))
+            print(f"{SKILLS}/ differs from " + site + ": " + ", ".join(changed))
             print("The skill is edited in prized-dev/doppel and mirrored here; run the Sync skill workflow.")
             return 1
-        print(f"skills/ matches {site}: " + ", ".join(sorted(skills)))
+        print(f"{SKILLS}/ matches {site}: " + ", ".join(sorted(skills)))
         return 0
     if not changed:
         print(f"up to date with {site}: " + ", ".join(sorted(skills)))

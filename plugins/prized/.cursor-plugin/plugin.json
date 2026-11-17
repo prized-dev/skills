@@ -1,12 +1,11 @@
 {
   "name": "prized",
   "displayName": "Prized",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Give Claude Code a cloud dev box: it copies your project to a Prized box, a Linux machine that stays on, and keeps working there with your laptop closed. Also runs code in Prized Sandboxes, Linux microVMs.",
   "author": {
     "name": "Prized",
-    "email": "team@prized.dev",
-    "url": "https://prized.dev"
+    "email": "team@prized.dev"
   },
   "homepage": "https://prized.dev",
   "repository": "https://github.com/prized-dev/skills",
@@ -25,9 +24,5 @@
     "code-execution",
     "agents"
   ],
-  "icon": "./assets/icon.png",
-  "documentationUrl": "https://prized.dev/claude-code",
-  "supportUrl": "https://github.com/prized-dev/skills/issues",
-  "privacyPolicyUrl": "https://prized.dev/privacy",
-  "termsOfServiceUrl": "https://prized.dev/terms"
+  "logo": "assets/icon.png"
 }

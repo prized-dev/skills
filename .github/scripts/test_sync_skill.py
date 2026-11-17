@@ -68,8 +68,10 @@ class SyncTest(unittest.TestCase):
     def setUp(self) -> None:
         self.root = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.root)
-        (self.root / ".claude-plugin").mkdir()
-        (self.root / ".claude-plugin/plugin.json").write_text('{\n  "name": "x",\n  "version": "1.0.0"\n}\n')
+        self.manifest = self.root / sync_skill.PLUGIN / ".claude-plugin/plugin.json"
+        self.manifest.parent.mkdir(parents=True)
+        self.manifest.write_text('{\n  "name": "x",\n  "version": "1.0.0"\n}\n')
+        self.skills = self.root / sync_skill.SKILLS
 
     def run_sync(self, *args: str) -> int:
         argv = ["sync_skill.py", "--root", str(self.root), *args]
@@ -80,13 +82,16 @@ class SyncTest(unittest.TestCase):
         return code
 
     def version(self) -> str:
-        return json.loads((self.root / ".claude-plugin/plugin.json").read_text())["version"]
+        return json.loads(self.manifest.read_text())["version"]
 
     def test_first_sync_fills_without_bump_then_change_bumps(self) -> None:
-        files = {"SKILL.md": SKILL_MD, "scripts/a.py": b"print(1)\n"}
+        files = {"SKILL.md": SKILL_MD, "scripts/a.py": b"print(1)\n", "scripts/b.txt": b"#!/bin/sh\n"}
         with site(files):
             self.assertEqual(self.run_sync(), 0)
-        self.assertEqual((self.root / "skills/demo/scripts/a.py").read_bytes(), b"print(1)\n")
+        # Scripts stay on prized.dev: the plugin carries only what the directory accepts.
+        self.assertEqual(sorted(sync_skill.local_files(self.skills / "demo")), ["SKILL.md"])
+        lock = json.loads((self.root / ".github/skills-source.json").read_text())
+        self.assertEqual(lock["skills"]["demo"]["files"], ["SKILL.md", "scripts/a.py", "scripts/b.txt"])
         self.assertEqual(self.version(), "1.0.0")
         with site(files):
             self.assertEqual(self.run_sync("--check"), 0)
@@ -99,7 +104,7 @@ class SyncTest(unittest.TestCase):
             self.assertEqual(self.run_sync("--check"), 1)
             self.assertEqual(self.run_sync(), 0)
         self.assertEqual(self.version(), "1.0.1")
-        self.assertFalse((self.root / "skills/demo/scripts/a.py").exists())
+        self.assertFalse((self.skills / "demo/scripts/a.py").exists())
         lock = json.loads((self.root / ".github/skills-source.json").read_text())
         self.assertEqual(lock["skills"]["demo"]["files"], ["SKILL.md"])
 
@@ -107,12 +112,12 @@ class SyncTest(unittest.TestCase):
         files = {"SKILL.md": SKILL_MD}
         with site(files):
             self.run_sync()
-        (self.root / "skills/demo/SKILL.md").write_bytes(SKILL_MD + b"edited here\n")
+        (self.skills / "demo/SKILL.md").write_bytes(SKILL_MD + b"edited here\n")
         with site(files):
             self.assertEqual(self.run_sync("--check"), 1)
             self.assertIn("prized-dev/doppel", self.output)
             self.run_sync()
-        self.assertEqual((self.root / "skills/demo/SKILL.md").read_bytes(), SKILL_MD)
+        self.assertEqual((self.skills / "demo/SKILL.md").read_bytes(), SKILL_MD)
 
     def test_refuses_bad_archives_and_changes_nothing(self) -> None:
         cases = {
@@ -137,89 +142,91 @@ class SyncTest(unittest.TestCase):
             with self.subTest(label), site(**kwargs):
                 with self.assertRaises(sync_skill.SyncError):
                     self.run_sync()
-                self.assertFalse((self.root / "skills").exists())
+                self.assertFalse(self.skills.exists())
                 self.assertEqual(self.version(), "1.0.0")
 
     def test_unpublished_folder_is_drift_and_removed(self) -> None:
         with site({"SKILL.md": SKILL_MD}):
             self.run_sync()
-        (self.root / "skills/other").mkdir()
-        (self.root / "skills/other/SKILL.md").write_bytes(b"x")
+        (self.skills / "other").mkdir()
+        (self.skills / "other/SKILL.md").write_bytes(b"x")
         with site({"SKILL.md": SKILL_MD}):
             self.assertEqual(self.run_sync("--check"), 1)
             self.assertEqual(self.run_sync(), 0)
-        self.assertFalse((self.root / "skills/other").exists())
-        self.assertTrue((self.root / "skills/demo/SKILL.md").exists())
+        self.assertFalse((self.skills / "other").exists())
+        self.assertTrue((self.skills / "demo/SKILL.md").exists())
 
     def test_local_skill_is_kept(self) -> None:
         local = sync_skill.LOCAL_SKILLS[0]
-        (self.root / "skills" / local).mkdir(parents=True)
-        (self.root / "skills" / local / "SKILL.md").write_bytes(b"kept\n")
+        (self.skills / local).mkdir(parents=True)
+        (self.skills / local / "SKILL.md").write_bytes(b"kept\n")
         with site({"SKILL.md": SKILL_MD}):
             self.assertEqual(self.run_sync(), 0)
             self.assertEqual(self.run_sync("--check"), 0)
-        self.assertEqual((self.root / "skills" / local / "SKILL.md").read_bytes(), b"kept\n")
+        self.assertEqual((self.skills / local / "SKILL.md").read_bytes(), b"kept\n")
         lock = json.loads((self.root / ".github/skills-source.json").read_text())
         self.assertNotIn(local, lock["skills"])
 
     def test_bump_sets_the_top_level_version_only(self) -> None:
-        (self.root / ".claude-plugin/plugin.json").write_text(
+        self.manifest.write_text(
             '{\n  "metadata": {"version": "9"},\n  "name": "x",\n  "version": "1.0.0"\n}\n'
         )
         with site({"SKILL.md": SKILL_MD}):
             self.run_sync()
         with site({"SKILL.md": SKILL_MD + b"v2\n"}):
             self.run_sync()
-        manifest = json.loads((self.root / ".claude-plugin/plugin.json").read_text())
+        manifest = json.loads(self.manifest.read_text())
         self.assertEqual((manifest["version"], manifest["metadata"]["version"]), ("1.0.1", "9"))
 
     def test_live_skill_shape_passes_the_frontmatter_check(self) -> None:
-        live = (Path(__file__).parents[2] / "skills/prized-sandboxes/SKILL.md").read_text()
+        live = (Path(__file__).parents[2] / sync_skill.SKILLS / "prized-sandboxes/SKILL.md").read_text()
         sync_skill.check_frontmatter("prized-sandboxes", live)
 
     def test_publishing_a_local_skill_fails_closed(self) -> None:
         local = sync_skill.LOCAL_SKILLS[0]
-        (self.root / "skills" / local).mkdir(parents=True)
-        (self.root / "skills" / local / "SKILL.md").write_bytes(b"kept\n")
+        (self.skills / local).mkdir(parents=True)
+        (self.skills / local / "SKILL.md").write_bytes(b"kept\n")
         with mock.patch.object(sync_skill, "LOCAL_SKILLS", ("demo",)), site({"SKILL.md": SKILL_MD}):
             with self.assertRaises(sync_skill.SyncError):
                 self.run_sync()
-        self.assertEqual((self.root / "skills" / local / "SKILL.md").read_bytes(), b"kept\n")
-        self.assertFalse((self.root / "skills/demo").exists())
+        self.assertEqual((self.skills / local / "SKILL.md").read_bytes(), b"kept\n")
+        self.assertFalse((self.skills / "demo").exists())
 
     def test_local_skills_pass_the_frontmatter_check(self) -> None:
         repo = Path(__file__).parents[2]
         for name in sync_skill.LOCAL_SKILLS:
-            text = (repo / "skills" / name / "SKILL.md").read_text()
+            text = (repo / sync_skill.SKILLS / name / "SKILL.md").read_text()
             sync_skill.check_frontmatter(name, text)
             self.assertIsNone(sync_skill.RUNS_ON_LOAD.search(text), name)
 
     def test_validate_workflow_exempts_each_local_skill(self) -> None:
         workflow = (Path(__file__).parents[2] / ".github/workflows/validate.yml").read_text()
         for name in sync_skill.LOCAL_SKILLS:
-            self.assertIn(f"':(exclude)skills/{name}'", workflow, name)
+            self.assertIn(f"':(exclude){sync_skill.SKILLS}/{name}'", workflow, name)
 
     def test_manifests_move_together(self) -> None:
-        (self.root / "plugin.json").write_text('{\n  "name": "x",\n  "version": "1.0.0"\n}\n')
-        (self.root / ".cursor-plugin").mkdir()
-        (self.root / ".cursor-plugin/plugin.json").write_text('{\n  "name": "x",\n  "version": "1.0.0"\n}\n')
+        plugin = self.root / sync_skill.PLUGIN
+        (plugin / "plugin.json").write_text('{\n  "name": "x",\n  "version": "1.0.0"\n}\n')
+        (plugin / ".cursor-plugin").mkdir()
+        (plugin / ".cursor-plugin/plugin.json").write_text('{\n  "name": "x",\n  "version": "1.0.0"\n}\n')
         with site({"SKILL.md": SKILL_MD}):
             self.run_sync()
         with site({"SKILL.md": SKILL_MD + b"v2\n"}):
             self.run_sync()
-        self.assertEqual(json.loads((self.root / "plugin.json").read_text())["version"], "1.0.1")
-        self.assertEqual(json.loads((self.root / ".cursor-plugin/plugin.json").read_text())["version"], "1.0.1")
+        self.assertEqual(json.loads((plugin / "plugin.json").read_text())["version"], "1.0.1")
+        self.assertEqual(json.loads((plugin / ".cursor-plugin/plugin.json").read_text())["version"], "1.0.1")
         self.assertEqual(self.version(), "1.0.1")
 
 
 class RepoManifestsTest(unittest.TestCase):
     def test_root_claude_and_cursor_manifests_agree(self) -> None:
         repo = Path(__file__).parents[2]
-        claude = json.loads((repo / ".claude-plugin/plugin.json").read_text())
-        portable = json.loads((repo / "plugin.json").read_text())
+        plugin = repo / sync_skill.PLUGIN
+        claude = json.loads((plugin / ".claude-plugin/plugin.json").read_text())
+        portable = json.loads((plugin / "plugin.json").read_text())
         for key in ("name", "version", "description", "author", "homepage", "repository", "license", "keywords"):
             self.assertEqual(claude[key], portable[key], key)
-        cursor = json.loads((repo / ".cursor-plugin/plugin.json").read_text())
+        cursor = json.loads((plugin / ".cursor-plugin/plugin.json").read_text())
         for key in ("name", "displayName", "version", "description", "homepage", "repository", "license", "keywords"):
             self.assertEqual(cursor[key], claude[key], key)
         # Cursor's schema (cursor/plugins schemas/plugin.schema.json) rejects any other key,
@@ -229,9 +236,19 @@ class RepoManifestsTest(unittest.TestCase):
                    "commands", "agents", "skills", "rules", "hooks", "mcpServers", "variables"}
         self.assertLessEqual(set(cursor), allowed)
         self.assertEqual(cursor["author"], {k: portable["author"][k] for k in ("name", "email")})
-        self.assertTrue((repo / cursor["logo"]).is_file(), cursor["logo"])
+        self.assertTrue((plugin / cursor["logo"]).is_file(), cursor["logo"])
         entry = json.loads((repo / ".claude-plugin/marketplace.json").read_text())["plugins"][0]
-        self.assertEqual((entry["name"], entry["source"]), (claude["name"], "./"))
+        self.assertEqual((entry["name"], entry["source"]), (claude["name"], f"./{sync_skill.PLUGIN}"))
+
+    def test_plugin_folder_holds_only_what_the_directory_accepts(self) -> None:
+        # Claude's plugin directory blocks scripts and other file types from an
+        # organization it hasn't verified; LICENSE is the one file with no suffix.
+        plugin = Path(__file__).parents[2] / sync_skill.PLUGIN
+        for path in sorted(p for p in plugin.rglob("*") if p.is_file()):
+            rel = path.relative_to(plugin).as_posix()
+            with self.subTest(rel):
+                self.assertTrue(rel == "LICENSE" or rel.lower().endswith(sync_skill.SHIPPED), rel)
+                self.assertFalse(path.read_bytes().startswith(b"#!"), rel)
 
 
 if __name__ == "__main__":
