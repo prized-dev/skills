@@ -1,8 +1,13 @@
 # Prized for ChatGPT and Codex
 
-This folder is the Prized plugin for OpenAI's plugin directory, which ChatGPT and Codex share. It has one skill, `prized-boxes`: Codex puts your project on a Prized box (a cloud Linux machine that stays on), runs long jobs and Codex tasks there, and checks on, pauses, resumes and resizes the box, all through the `prized` CLI on your computer. You install the CLI yourself, and Codex asks before anything that copies a file or a sign-in, or costs money.
+This folder is the Prized plugin for OpenAI's plugin directory, which ChatGPT and Codex share. It does what the Claude Code plugin in [`../plugins/prized`](../plugins/prized) does, with the same two skills, both driving the `prized` CLI on your computer:
 
-The skill runs a local CLI, so the plugin is desktop only (`requires_local_executor`): it works in the ChatGPT desktop app's local threads and in Codex, not in ChatGPT on the web.
+- `prized-boxes`: Codex puts your project on a Prized box (a cloud Linux machine that stays on), runs long jobs and Codex tasks there, checks on it, and pauses, resumes, resizes, prices and deletes it.
+- `prized-sandboxes`: Codex runs commands, tests and agents in Prized Sandboxes, one or many in parallel, and deletes them when the job is done; or builds sandboxes into your app with Prized's SDK.
+
+You install the CLI yourself, and Codex asks before anything that copies a file or a sign-in, or costs money.
+
+The skills run a local CLI, so the plugin is desktop only (`requires_local_executor`): it works in the ChatGPT desktop app's local threads and in Codex, not in ChatGPT on the web.
 
 ## Try it locally
 
@@ -25,20 +30,33 @@ The script applies the package rules in OpenAI's [submission errors reference](h
 
 ## Try these before a release
 
-Run them in a small project with tests, with the plugin installed, and compare with the last release. A test box costs money while it is awake: delete it when you are done.
+Run them in a small project with tests, with the plugin installed, next to the Claude Code plugin on the same prompts: the two should ask the same things and run the same commands. A test box costs money while it is awake: delete it when you are done.
 
 | Ask | What should happen |
 | --- | --- |
 | "Put this project on a Prized box and run its tests there." with no CLI installed | It gives the install line for the system and stops; it does not run the installer. |
-| The same, installed but signed out | It asks you to run `prized login` yourself. |
-| The same, signed in, no box connected to this computer | It names the account, asks which box or a new one (size and auto-pause window), then copies the project once and reports the test results, what stayed here, and when the box pauses itself. |
-| "Is my Prized box running, and is the job on it done?" in a new thread | It answers for the box this computer is connected to, without asking which. |
-| "Have Codex fix the failing tests on my Prized box while my laptop is closed." | It checks that the box has the latest commits and that Codex is signed in there, asks about what is missing and stops; then it starts a detached `prized prompt` run and gives its id. It does not fix the tests on this computer. |
-| "Bring that fix back to this laptop, then pause the box." | The fix lands here, and the box shows as paused. |
+| The same, installed but signed out | It asks whether you have an account, and has you run `prized login` yourself. |
+| The same, signed in, several boxes on the account | It names the account and asks, in one message: which box or a new one (sizes with their rates, an auto-pause window), the project copy, Codex's sign-in, GitHub, and each toolchain group. Then it copies the project once and reports the test results, what stayed here, and when the box pauses itself. |
+| "Is my Prized box running, and is the job on it done?" in a new thread | It answers for the box this computer is connected to, and says which box it took that to be. |
+| "Have Codex fix the failing tests on my Prized box while my laptop is closed." | It confirms the box, finds that the box lacks the latest commits and that Codex is signed out there, asks and stops; then it starts a detached `prized prompt` run and gives its id. It does not fix the tests on this computer. |
+| "What does this box cost a month?" | It reads the pricing page and quotes the box's rates awake and asleep; it lays out no plans. |
+| "Run python3 --version in a Prized sandbox." | It asks first (template, size, time limit); on a yes it creates the sandbox, prints `Python 3.12.3` and deletes it. |
+| "Run this project's test suite in 4 sandboxes in parallel." | One sandbox, the project copied in, three forks, the suite in all four, all four deleted. |
 | "Run this project's tests." | It runs them here; the plugin stays out of it. |
 
 OpenAI's guide to testing a plugin is [Connect and test your plugin](https://developers.openai.com/plugins/deploy/connect-chatgpt#test-the-complete-plugin).
 
 ## Keep it in step
 
-`skills/prized-boxes/SKILL.md` here is the Codex edition of [`../plugins/prized/skills/prized-boxes`](../plugins/prized/skills/prized-boxes/SKILL.md), the Claude Code skill. A change to one usually belongs in both. This edition differs on purpose: it names Codex, not Claude Code; the user signs up and runs `prized login` themselves (the skill never asks for a sign-in code); it quotes no prices and links the [pricing page](https://prized.dev/pricing) instead; and it covers resizing a box and the ChatGPT app's SSH connection. It also takes the box this computer is connected to as the user's box, asks only the copy questions a request needs, and checks the box's code and Codex's sign-in there before a hand-off. `skills/prized-boxes/agents/openai.yaml` is the skill's name in the app. Raise `version` in `plugin.json` with every change, since a new upload needs a new version.
+The two skills here are the Codex editions of the Claude Code skills in [`../plugins/prized/skills`](../plugins/prized/skills). They follow them section for section, and a change to one belongs in both. What differs, and why:
+
+| The Claude Code plugin | This plugin | Why |
+| --- | --- | --- |
+| Makes an account from an email address and the 6-digit code Prized sends | The user signs up at prized.dev and runs `prized login` | OpenAI does not let a plugin collect sign-in codes or keys |
+| Quotes rates and the plan that runs a box around the clock, and links the billing page | Quotes rates only, and links the pricing page | OpenAI does not let a plugin lay out subscription plans or link to a checkout |
+| Mentions the credit a new account starts with | Leaves it out | OpenAI's listing rules bar offers, and the skills keep to them too |
+| `prized teleport` moves the running conversation to the box | Points to the ChatGPT desktop app's SSH connection and Hand off | `prized teleport` moves Claude Code conversations only |
+| The user can type `! <command>` in the session | The user pastes into their own terminal | That shortcut is Claude Code's |
+| `--agent claude`, `claude -p`, `/login` | `--agent codex`, `codex exec`, `codex login --device-auth` | The agent on the box is Codex |
+
+This edition also spells out a few things Claude Code does unprompted and Codex did not: ask and end the turn, ask about the project copy and the first sandbox even when the request names them, hand over the task and not its result, and say at the end what is on the box and when it pauses. `skills/<skill>/agents/openai.yaml` is each skill's name in the app. Raise `version` in `plugin.json` with every change, since a new upload needs a new version.

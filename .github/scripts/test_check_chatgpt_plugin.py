@@ -45,6 +45,8 @@ class CheckChatGPTPlugin(unittest.TestCase):
         self.assertIn("skills/prized-boxes/SKILL.md", names)
         self.assertIn("assets/icon.png", names)
         self.assertIn("skills/prized-boxes/agents/openai.yaml", names)
+        self.assertIn("skills/prized-sandboxes/SKILL.md", names)
+        self.assertIn("skills/prized-sandboxes/agents/openai.yaml", names)
         self.assertNotIn("README.md", names)
 
     def test_listing_limits(self) -> None:

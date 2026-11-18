@@ -24,7 +24,7 @@ CI runs the same checks. Never commit a key, a `.env` file or a token.
 
 ## The ChatGPT and Codex plugin
 
-`chatgpt/` is a separate plugin for OpenAI's plugin directory, with its own `plugin.json` and a Codex edition of the boxes skill; `.agents/plugins/marketplace.json` lists it for Codex. It lives outside `plugins/prized`, so a change to it never changes the Claude plugin or its version. Raise `version` in `chatgpt/plugin.json` with every change to it. The same rules apply (text and images only, no piped installers, no keys from the environment), plus OpenAI's (no prices or offers) and ours (the skill names Codex, never Claude). Check it, and build the ZIP to upload at platform.openai.com/plugins:
+`chatgpt/` is a separate plugin for OpenAI's plugin directory, with its own `plugin.json` and Codex editions of both skills, kept in step with the Claude Code ones ([what differs and why](chatgpt/README.md#keep-it-in-step)); `.agents/plugins/marketplace.json` lists it for Codex. It lives outside `plugins/prized`, so a change to it never changes the Claude plugin or its version. Raise `version` in `chatgpt/plugin.json` with every change to it. The same rules apply (text and images only, no piped installers, no keys from the environment), plus OpenAI's (no price figures or offers in the package, no sign-in codes) and ours (the skills name Codex, never Claude). Check it, and build the ZIP to upload at platform.openai.com/plugins:
 
 ```sh
 python3 .github/scripts/check_chatgpt_plugin.py chatgpt --zip prized-chatgpt.zip
