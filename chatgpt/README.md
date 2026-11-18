@@ -23,6 +23,22 @@ python3 .github/scripts/check_chatgpt_plugin.py chatgpt --zip prized-chatgpt.zip
 
 The script applies the package rules in OpenAI's [submission errors reference](https://developers.openai.com/plugins/deploy/submission-errors) and the Agent Plugins schema; CI runs it on every pull request. Upload the ZIP at [platform.openai.com/plugins](https://platform.openai.com/plugins) under **Skills only**.
 
+## Try these before a release
+
+Run them in a small project with tests, with the plugin installed, and compare with the last release. A test box costs money while it is awake: delete it when you are done.
+
+| Ask | What should happen |
+| --- | --- |
+| "Put this project on a Prized box and run its tests there." with no CLI installed | It gives the install line for the system and stops; it does not run the installer. |
+| The same, installed but signed out | It asks you to run `prized login` yourself. |
+| The same, signed in, no box connected to this computer | It names the account, asks which box or a new one (size and auto-pause window), then copies the project once and reports the test results, what stayed here, and when the box pauses itself. |
+| "Is my Prized box running, and is the job on it done?" in a new thread | It answers for the box this computer is connected to, without asking which. |
+| "Have Codex fix the failing tests on my Prized box while my laptop is closed." | It checks that the box has the latest commits and that Codex is signed in there, asks about what is missing and stops; then it starts a detached `prized prompt` run and gives its id. It does not fix the tests on this computer. |
+| "Bring that fix back to this laptop, then pause the box." | The fix lands here, and the box shows as paused. |
+| "Run this project's tests." | It runs them here; the plugin stays out of it. |
+
+OpenAI's guide to testing a plugin is [Connect and test your plugin](https://developers.openai.com/plugins/deploy/connect-chatgpt#test-the-complete-plugin).
+
 ## Keep it in step
 
-`skills/prized-boxes/SKILL.md` here is the Codex edition of [`../plugins/prized/skills/prized-boxes`](../plugins/prized/skills/prized-boxes/SKILL.md), the Claude Code skill. A change to one usually belongs in both. This edition differs on purpose: it names Codex, not Claude Code; the user signs up and runs `prized login` themselves (the skill never asks for a sign-in code); it quotes no prices and links the [pricing page](https://prized.dev/pricing) instead; and it covers resizing a box and the ChatGPT app's SSH connection. Raise `version` in `plugin.json` with every change, since a new upload needs a new version.
+`skills/prized-boxes/SKILL.md` here is the Codex edition of [`../plugins/prized/skills/prized-boxes`](../plugins/prized/skills/prized-boxes/SKILL.md), the Claude Code skill. A change to one usually belongs in both. This edition differs on purpose: it names Codex, not Claude Code; the user signs up and runs `prized login` themselves (the skill never asks for a sign-in code); it quotes no prices and links the [pricing page](https://prized.dev/pricing) instead; and it covers resizing a box and the ChatGPT app's SSH connection. It also takes the box this computer is connected to as the user's box, asks only the copy questions a request needs, and checks the box's code and Codex's sign-in there before a hand-off. `skills/prized-boxes/agents/openai.yaml` is the skill's name in the app. Raise `version` in `plugin.json` with every change, since a new upload needs a new version.

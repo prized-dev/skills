@@ -44,6 +44,7 @@ class CheckChatGPTPlugin(unittest.TestCase):
         self.assertIn("plugin.json", names)
         self.assertIn("skills/prized-boxes/SKILL.md", names)
         self.assertIn("assets/icon.png", names)
+        self.assertIn("skills/prized-boxes/agents/openai.yaml", names)
         self.assertNotIn("README.md", names)
 
     def test_listing_limits(self) -> None:
@@ -123,6 +124,22 @@ class CheckChatGPTPlugin(unittest.TestCase):
     def test_ds_store_ignored(self) -> None:
         (self.root / ".DS_Store").write_bytes(b"\x00\x00\x00\x01Bud1")
         self.assertEqual(checker.check(self.root), [])
+
+    def test_skill_agent_needs_display_name(self) -> None:
+        agent = self.root / "skills" / "prized-boxes" / "agents" / "openai.yaml"
+        agent.write_text('interface:\n  short_description: "Put a project on a cloud dev box"\n')
+        self.assertTrue(any("interface.display_name" in p for p in checker.check(self.root)))
+
+    def test_skill_agent_needs_interface(self) -> None:
+        agent = self.root / "skills" / "prized-boxes" / "agents" / "openai.yaml"
+        agent.write_text("policy:\n  allow_implicit_invocation: true\n")
+        self.assertTrue(any("interface is required" in p for p in checker.check(self.root)))
+
+    def test_invisible_character_rejected(self) -> None:
+        m = self.manifest()
+        m["extensions"]["com.openai"]["interface"]["shortDescription"] = "Cloud dev boxes\u200b for agents"
+        self.write(m)
+        self.assertTrue(any("shortDescription" in p for p in checker.check(self.root)))
 
     def test_hooks_rejected(self) -> None:
         (self.root / "hooks").mkdir()

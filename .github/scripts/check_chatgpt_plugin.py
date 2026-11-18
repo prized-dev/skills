@@ -30,6 +30,7 @@ import json
 import re
 import struct
 import sys
+import unicodedata
 import zipfile
 from pathlib import Path
 
@@ -45,9 +46,9 @@ SEMVER = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
 NAME_SCHEMA = re.compile(r"^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$")
 NAME_SUBMIT = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")  # OpenAI: lowercase letters, numbers and single hyphens
 HEX = re.compile(r"^#[0-9A-Fa-f]{6}$")
-# Control characters other than tab/newline, Unicode line and paragraph separators, and
-# invisible formatting characters (OpenAI: "supported text").
-UNSUPPORTED = re.compile("[\x00-\x08\x0b-\x1f\x7f\u2028\u2029\u200b-\u200f\u202a-\u202e\u2060-\u2064\ufeff]")
+# Unicode categories outside OpenAI's "supported text": control characters (tab and newline
+# aside), invisible formatting characters, and the line and paragraph separators.
+UNSUPPORTED_CATEGORIES = ("Cc", "Cf", "Zl", "Zp")
 PRICE = re.compile(r"\$\s?\d")
 PROMO = re.compile(r"free (credit|trial|tier)|\btrial\b|no card|discount|promo|coupon", re.I)
 FORBIDDEN_FILES = (".app.json", ".mcp.json", "mcp.json", "hooks", ".claude-plugin", ".codex-plugin")
@@ -61,7 +62,7 @@ ENV_KEY = re.compile(r"PRIZED_API_KEY|\$\{?[A-Z0-9_]*(API_KEY|TOKEN|SECRET)\b")
 
 
 def text_ok(value: str, one_line: bool) -> bool:
-    if UNSUPPORTED.search(value):
+    if any(ch not in "\t\n" and unicodedata.category(ch) in UNSUPPORTED_CATEGORIES for ch in value):
         return False
     if one_line and ("\n" in value or "\r" in value):
         return False
@@ -141,6 +142,65 @@ def front_matter(text: str) -> tuple[dict[str, str], str] | None:
     return fields, text[end + 4:].lstrip("-\n")
 
 
+def check_skill_agent(entry: Path, problems: list[str]) -> None:
+    """skills/<skill>/agents/openai.yaml, in the plain two-level form ours uses:
+
+        interface:
+          display_name: "..."
+          short_description: "..."
+    """
+    path = entry / "agents" / "openai.yaml"
+    where = f"skills/{entry.name}/agents/openai.yaml"
+    if not path.exists() and not path.is_symlink():
+        return
+    if path.is_symlink() or not path.is_file():
+        problems.append(f"{where}: must be a regular file")
+        return
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except UnicodeDecodeError:
+        problems.append(f"{where}: not UTF-8")
+        return
+    sections: dict[str, dict[str, str]] = {}
+    current: dict[str, str] | None = None
+    for line in lines:
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        key, sep, value = line.strip().partition(":")
+        value = value.strip()
+        if not sep or not key or "\t" in line:
+            problems.append(f"{where}: this check reads plain `key: value` lines only")
+            return
+        if not line.startswith(" "):
+            if value:
+                problems.append(f"{where}: {key} must be a mapping")
+                return
+            current = sections.setdefault(key, {})
+        elif current is None or not line.startswith("  ") or line.startswith("   "):
+            problems.append(f"{where}: this check reads one level of two-space indentation only")
+            return
+        else:
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+                value = value[1:-1]
+            current[key] = value
+    for key in sorted(set(sections) - {"interface", "policy", "dependencies"}):
+        problems.append(f"{where}: {key} is not a supported key")
+    ui = sections.get("interface")
+    if ui is None:
+        problems.append(f"{where}: interface is required when the file is included")
+        return
+    for key in ("display_name", "short_description"):
+        if not ui.get(key, "").strip() or not text_ok(ui[key], True):
+            problems.append(f"{where}: interface.{key} is required, one line of supported text")
+    if "default_prompt" in ui and (not ui["default_prompt"].strip() or not text_ok(ui["default_prompt"], True)):
+        problems.append(f"{where}: interface.default_prompt must be non-empty when provided")
+    shown = " ".join(ui.values())
+    if re.search(r"\bClaude\b", shown):
+        problems.append(f"{where}: mentions Claude; this edition names Codex")
+    if PRICE.search(shown) or PROMO.search(shown):
+        problems.append(f"{where}: quotes a price or an offer")
+
+
 def check_skills(root: Path, plugin_name: str, problems: list[str]) -> list[str]:
     skills_dir = root / "skills"
     if not skills_dir.is_dir():
@@ -193,6 +253,7 @@ def check_skills(root: Path, plugin_name: str, problems: list[str]) -> list[str]
             problems.append(f"skills/{entry.name}/SKILL.md: quotes a price or an offer; link https://prized.dev/pricing instead")
         if PIPE_TO_SHELL.search(text):
             problems.append(f"skills/{entry.name}/SKILL.md: pipes a download into a shell; give the user the install line to run instead")
+        check_skill_agent(entry, problems)
         names.append(name)
     for stray in skills_dir.iterdir():
         if stray.is_file():
