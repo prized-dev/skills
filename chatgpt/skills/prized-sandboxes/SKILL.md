@@ -19,7 +19,7 @@ The user's explicit instructions come before the defaults here, but these hold e
 - Act only on sandboxes you created in this conversation or the user named. `prized sandbox ls` shows every sandbox in the workspace, including other people's and their apps'.
 - Quote prices only from https://prized.dev/pricing.md, read at the time, never from memory. Quote rates, not plans: for plans, link https://prized.dev/pricing. Never start a checkout, pass along a billing or checkout link, or pay for them.
 - Add `--json` to `prized` commands when you parse the output: each prints one JSON object with an `ok` field, and failures carry `error.code` and a `hint` to relay (codes: https://prized.dev/docs/cli.md#for-agents-and-scripts).
-- Every `prized` command needs the network. If your sandbox blocks a command, ask the user to approve running it outside the sandbox; do not read a network error as a sign-in problem.
+- Every `prized` command needs the network. If your sandbox blocks a command, it needs approval to run outside the sandbox; do not read a network error as a sign-in problem. Approving a command is never the user's answer to a question this skill tells you to ask.
 
 ## 1. The CLI and the sign-in
 
@@ -33,7 +33,27 @@ The sign-in is shared with Prized boxes (the prized-boxes skill). A key made for
 
 ## 2. Ask, then one real run first
 
-Do not run `prized sandbox create` or `fork` yet, however small or quick the job. First ask the user, and end your turn on the question: "May I start a sandbox? Template `<t>`, <the default size, or the size you will pass>, deleted after at most <time>." Don't guess the default size's numbers. Their request to run something in a sandbox is not an answer to it: they have not seen the template, the size or the time limit. A note that says what you are about to create, sent while you carry on, is not asking either: wait for their reply. In the turn that asks, do not run or request `prized sandbox create` or `fork`. After their yes:
+The first sandbox in a conversation takes two turns, however small or quick the job.
+
+Turn one: ask, and stop. Ask as soon as section 1's check has passed, before you read the project, package files or plan the run: nothing you would prepare changes the question, and a plan you have written down is not a question. Your reply ends with the question, "May I start a sandbox? Template `<t>`, <the default size, or the size you will pass>, deleted after at most <time>." Don't guess the default size's numbers. In this turn you do not run `prized sandbox create` or `fork`, and you do not request approval to run them. Telling the user the template, the size and the time limit and then carrying on is not asking: they have to answer.
+
+Turn two: only when the user's latest message answers that question. Check before `create` or `fork`: if their latest message is still the request itself, however exact it is, you are in turn one.
+
+It goes like this:
+
+> User: Run python3 --version in a Prized sandbox.
+> You: May I start a sandbox? Template `prized-base-v1`, the default size, deleted after at most 5 minutes.
+> User: Yes.
+> You: (now, and not before, the commands below)
+
+A bigger job is the same, and the question still comes before any preparation:
+
+> User: Run the test suite in 4 sandboxes in parallel.
+> You: May I start 4 sandboxes? Template `prized-base-v1`, the default size, each deleted after at most 10 minutes.
+> User: Yes.
+> You: (now read the project, package it, and run section 3's commands)
+
+After their yes:
 
 ```bash
 prized sandbox create --max-runtime 30m --json      # only after their yes; waits until it is running; read the id (sbx_...)
@@ -93,3 +113,7 @@ A sandbox is for a job with an end. A Prized box is a cloud Linux machine of the
 - Fork a running VM to run work in parallel: https://prized.dev/docs/sandboxes-fork-parallel.md
 - Docker and Compose in a sandbox: https://prized.dev/docs/sandboxes-docker.md
 - CLI: `prized sandbox --help`, and `prized sandbox <command> --help`
+
+## Last check before `prized sandbox create` or `fork`
+
+Is the user's latest message their yes to your sandbox question? If it is anything else, the request included, ask the question now and end your turn. This holds for every request, however exactly it says what to run.

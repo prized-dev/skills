@@ -461,7 +461,7 @@ SCENARIOS: dict[str, list[dict]] = {
     ],
 }
 ORDER = ["local", "box", "status", "handoff", "sandbox", "sandboxes", "delete"]
-ASK_FIRST = ["box", "sandbox", "delete"]  # their first turn is the one that drifts
+ASK_FIRST = ["box", "sandbox", "sandboxes", "delete"]  # their first turn is the one that drifts
 NEEDS_BOX = {"handoff", "delete"}
 
 
@@ -686,6 +686,8 @@ def main() -> int:
     ap.add_argument("--refresh", action="store_true", help="pull the plugin's latest commit and reinstall it first")
     ap.add_argument("--reuse-box", action="store_true", help="the test box exists already; do not delete it at the end")
     ap.add_argument("--ask-first-only", action="store_true", help="run only the first turn of the ask-first prompts (with --repeat)")
+    ap.add_argument("--ask", default="", help="a prompt of your own that should end in a question: its first turn is run "
+                    "--repeat times and must start, change and delete nothing")
     ap.add_argument("--approval", default="on-request", choices=["on-request", "untrusted"], help="the app's default is on-request")
     ap.add_argument("--sandbox", default="workspace-write", choices=["workspace-write", "danger-full-access"],
                     help="danger-full-access only where Codex's sandbox cannot start (a container), with --approval untrusted")
@@ -693,16 +695,23 @@ def main() -> int:
     cfg.project = os.path.realpath(cfg.project)
     cfg.stamp = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S")
     cfg.out = pathlib.Path(cfg.project).parent / f"{pathlib.Path(cfg.project).name}-report" / cfg.stamp
-    os.makedirs(cfg.project, exist_ok=True)
-    cfg.out.mkdir(parents=True, exist_ok=True)
     names = [n for n in ORDER if not cfg.only or n in cfg.only.split(",")]
+    if cfg.ask:
+        SCENARIOS["yours"] = [{"say": cfg.ask, "allow": [], "must": [
+            ("asks first", asks), ("starts no sandbox before the yes", never(r"^sandbox (create|fork)\b")),
+            ("changes no box before the answer", never(CHANGES_A_BOX))]}]
+        ASK_FIRST.append("yours")
+        names, cfg.ask_first_only = ["yours"], True
     unknown = set(cfg.only.split(",")) - set(ORDER) - {""}
     if unknown:
         sys.exit(f"Unknown prompt: {', '.join(sorted(unknown))}. Choose from {', '.join(ORDER)}.")
     if NEEDS_BOX & set(names) and ("box" not in names or cfg.ask_first_only) and not cfg.reuse_box:
         sys.exit("handoff and delete need the test box: run them with box, or pass --reuse-box.")
+    os.makedirs(cfg.project, exist_ok=True)  # nothing is written before the arguments are known to be good
+    cfg.out.mkdir(parents=True, exist_ok=True)
 
-    print(f"Driving {cfg.codex}\nProject {cfg.project}\nReport  {cfg.out}/report.md")
+    print(f"Driving {cfg.codex} ({sh([cfg.codex, '--version']).stdout.strip() if cfg.codex else 'none'}, effort {cfg.effort})\n"
+          f"Project {cfg.project}\nReport  {cfg.out}/report.md")
     approver = Approver(cfg.box, preflight(cfg), local_ok=cfg.sandbox != "workspace-write")
     results, repeats, notes = [], {}, []
     if cfg.ask_first_only:
