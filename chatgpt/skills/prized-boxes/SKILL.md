@@ -13,7 +13,7 @@ This skill runs the `prized` CLI in a shell on the user's own computer. If you h
 
 The user's explicit instructions come before the defaults here. These hold either way:
 
-- Ask the user before you create, resize or wake a box (all cost money), copy the project, or copy any credential. Pass only the flags they said yes to.
+- Ask the user before you create, resize, wake or delete a box, copy the project, or copy any credential: the first three cost money, and a deleted box may not come back. A request that names the box to delete is not that yes (section 9). Pass only the flags they said yes to.
 - When you need an answer, ask and end your turn there. Don't start the task on this computer while you wait, unless they asked you to. A prompt to approve a command is not that answer: it shows the command, not what it will do to their box, so where a step says to ask first, ask in a message and run the command only after their reply.
 - Copy, never move or delete their files. The project goes to the box once, one way (`--copy-once`). Start a sync only if they ask for one.
 - Never ask the user for a password, an API key or a sign-in code, and never make an account for them. Never run `prized login` yourself, and never switch the account this computer uses.
@@ -97,7 +97,7 @@ Read https://prized.dev/pricing.md and quote from it: each size's rate awake and
 
 ## 9. Delete, only when asked
 
-Do not run `prized box delete` yet. First run `prized box info <box> --json`, then send the user one message and stop: "Delete `<box>`? <its size, its state, when it was made>. The machine and its disk go, and <whether it can be restored>." Their request to delete it is not an answer to that, and neither is an approval prompt for the command: they have not seen which box that name is on this account, or whether it can come back. In the turn that asks, do not run or request `prized box delete`.
+Do not run `prized box delete` yet, even when the request names the box exactly. First run `prized box info <box> --json`, then send the user one message and stop: "Delete `<box>`? <its size, its state, when it was made>. The machine and its disk go, and <whether it can be restored>." Their request to delete it is not an answer to that, and neither is an approval prompt for the command: they have not seen which box that name is on this account, or whether it can come back. In the turn that asks, do not run or request `prized box delete`.
 
 After their yes, `prized box delete <box> -y --json` deletes the machine and its disk. For 7 days its last state can usually be restored, but not for a box deleted within an hour of being created or under zero data retention.
 

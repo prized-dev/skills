@@ -18,7 +18,7 @@ codex plugin marketplace add prized-dev/skills
 codex plugin add prized@prized
 ```
 
-If `codex` is not on your PATH, the ChatGPT desktop app carries its own copy inside the app: run that one. Restart the app after adding the marketplace and install **Prized** from the Plugins Directory, where a local source is listed on the Personal tab. Then ask in a local thread, in a project: "Put this project on a Prized box and run its tests there."
+If `codex` is not on your PATH, the ChatGPT desktop app carries its own, at `/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex` on a Mac: run that one. Restart the app after adding the marketplace and install **Prized** from the Plugins Directory, where a local source is listed on the Personal tab. Then ask in a local thread, in a project: "Put this project on a Prized box and run its tests there."
 
 ## Check it and build the upload ZIP
 

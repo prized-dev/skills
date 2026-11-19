@@ -58,6 +58,10 @@ CASES = [
     (set(), f"prized box delete {BOX} -y --json", False),
     ({"box"}, f"prized box delete {BOX} -y --json", False),
     ({"box", "delete"}, f"prized box delete {BOX} -y --json", True),
+    ({"box"}, f"prized box rm {BOX} -y --json", False),
+    ({"box"}, f"prized delete {BOX} -y", False),
+    ({"box", "delete"}, f"prized box rm {BOX} -y --json", True),
+    ({"box", "delete"}, "prized box rm plum -y --json", False),
     # never the user's own steps, and nothing that is not prized
     ({"box"}, "prized login", False),
     ({"box"}, "prized update", False),
