@@ -34,6 +34,10 @@ jobs:
       - name: Plugin checks (file types, piped installers, keys, skill frontmatter, manifests)
         run: python3 -m unittest discover -s .github/scripts
 
+      # chatgpt/ is the separate ChatGPT and Codex plugin: OpenAI's documented package rules, offline.
+      - name: ChatGPT and Codex plugin
+        run: python3 .github/scripts/check_chatgpt_plugin.py chatgpt
+
       - name: Claude Code marketplace and plugin
         run: |
           npx -y @anthropic-ai/claude-code@2.1.310 plugin validate --strict .

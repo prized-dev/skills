@@ -19,10 +19,22 @@ Or, for Claude Code, Cursor, Codex, GitHub Copilot CLI and VS Code at once:
 npx plugins add prized-dev/skills
 ```
 
+## ChatGPT and Codex
+
+[`chatgpt/`](chatgpt/) is a separate plugin for OpenAI's plugin directory, which ChatGPT and Codex share: the same two skills, with Codex in place of Claude Code. It is desktop only, since it runs the `prized` CLI in a local thread. Codex and the ChatGPT desktop app install it from this repo's Codex marketplace:
+
+```bash
+codex plugin marketplace add prized-dev/skills
+codex plugin add prized@prized
+```
+
+`npx plugins add prized-dev/skills` also gives Codex this edition.
+
 ## This repository
 
 - `plugins/prized/`: the plugin, and only the plugin: its manifests, skills, icon, README and license.
 - `.claude-plugin/marketplace.json`: the marketplace that lists it.
+- `chatgpt/`: the separate ChatGPT and Codex plugin, outside `plugins/prized` so it never changes the Claude plugin. `.agents/plugins/marketplace.json` lists it for Codex.
 - `.github/`: the checks that run on every pull request. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License

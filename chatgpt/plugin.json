@@ -1,0 +1,60 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "prized",
+  "version": "1.0.0",
+  "description": "Give Codex computers in the cloud: it puts your project on a Prized box, a Linux machine that stays on, and keeps working there with your laptop closed, and it runs code, tests and agents in Prized Sandboxes, microVMs that start in seconds.",
+  "author": {
+    "name": "Prized",
+    "email": "team@prized.dev",
+    "url": "https://prized.dev"
+  },
+  "homepage": "https://prized.dev/codex",
+  "repository": "https://github.com/prized-dev/skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "prized",
+    "cloud-dev-box",
+    "box",
+    "remote-dev",
+    "cloud-vm",
+    "background-agents",
+    "long-running",
+    "sandbox",
+    "sandboxes",
+    "microvm",
+    "code-execution",
+    "agents",
+    "codex"
+  ],
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true,
+      "interface": {
+        "displayName": "Prized",
+        "shortDescription": "Cloud dev boxes and sandboxes",
+        "longDescription": "Give Codex computers in the cloud: it puts your project on a Prized box, a Linux machine that stays on, and keeps working there with your laptop closed, and it runs code, tests and agents in Prized Sandboxes, microVMs that start in seconds.",
+        "developerName": "Prized",
+        "category": "Developer Tools",
+        "capabilities": [
+          "Interactive",
+          "Write"
+        ],
+        "websiteURL": "https://prized.dev",
+        "supportURL": "https://prized.dev/docs/troubleshooting",
+        "privacyPolicyURL": "https://prized.dev/privacy",
+        "termsOfServiceURL": "https://prized.dev/terms",
+        "defaultPrompt": [
+          "Put this project on a Prized box and run its tests there.",
+          "Have Codex fix the failing tests on my Prized box while my laptop is closed.",
+          "Run this project's tests in 4 Prized sandboxes in parallel."
+        ],
+        "brandColor": "#0047D8",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/icon.png"
+      },
+      "publication": {
+        "release_notes": "First release, with two skills. prized-boxes has Codex create a Prized box, copy the project to it once, run long jobs and Codex tasks there, and check on, pause, resume and resize the box. prized-sandboxes has Codex run commands, tests and agents in Prized Sandboxes, one or many in parallel, and delete them when the job is done."
+      }
+    }
+  }
+}

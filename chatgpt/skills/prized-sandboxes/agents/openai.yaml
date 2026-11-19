@@ -1,0 +1,4 @@
+interface:
+  display_name: "Prized Sandboxes"
+  short_description: "Run code in throwaway Linux microVMs"
+  default_prompt: "Run this project's tests in 4 Prized sandboxes in parallel."

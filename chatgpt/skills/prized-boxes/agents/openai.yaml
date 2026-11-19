@@ -1,0 +1,4 @@
+interface:
+  display_name: "Prized boxes"
+  short_description: "Put a project on a cloud dev box"
+  default_prompt: "Put this project on a Prized box and run its tests there."
