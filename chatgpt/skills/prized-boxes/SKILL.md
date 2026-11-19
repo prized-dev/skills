@@ -14,7 +14,7 @@ This skill runs the `prized` CLI in a shell on the user's own computer. If you h
 The user's explicit instructions come before the defaults here. These hold either way:
 
 - Ask the user before you create, resize or wake a box (all cost money), copy the project, or copy any credential. Pass only the flags they said yes to.
-- When you need an answer, ask and end your turn there. Don't start the task on this computer while you wait, unless they asked you to.
+- When you need an answer, ask and end your turn there. Don't start the task on this computer while you wait, unless they asked you to. A prompt to approve a command is not that answer: it shows the command, not what it will do to their box, so where a step says to ask first, ask in a message and run the command only after their reply.
 - Copy, never move or delete their files. The project goes to the box once, one way (`--copy-once`). Start a sync only if they ask for one.
 - Never ask the user for a password, an API key or a sign-in code, and never make an account for them. Never run `prized login` yourself, and never switch the account this computer uses.
 - Never print, log or commit a key, never put one on a command line, and never read `~/.config/prized`.
@@ -45,7 +45,9 @@ Then run `prized box ls --json` again. If it fails with any other code, tell the
 
 `prized box ls --json` lists their boxes with `hostname`, `observedState`, `tier` (its size) and `autoPauseMin`; on a team's account that includes teammates' boxes. If there is none, or they want a new one, ask in one message which size (with its rate from the pricing page) and how long it may sit idle before it pauses itself, then run `prized box new <name> --size <size> --auto-pause <window> --wait --json`. Offer an auto-pause window (30m to 7d, 2h is a good default): without it, a box can start with auto-pause off and bill by the hour until someone pauses it. Without `--size`, Prized picks a size the balance runs comfortably. Sizes, smallest first: Nano (`nano`), Micro (`micro`), Extra Small (`lite`), Small (`flow`), Medium (`pro`), Large (`max`), Extra Large (`ultra`); `prized box new --help` lists the GPU sizes. If the account cannot run a size, the CLI refuses with a hint: relay it.
 
-With several boxes, ask which one or a new one, in the same message: name the boxes that could be theirs, and for a new one list the sizes with each one's rate from the pricing page and an auto-pause window to pick. Then name the box in every command after: as the argument where a command below shows `<box>`, and as `--box <name>` everywhere else (`prized exec --box <name> --cwd ... -- ...`, `prized setup`, `prized status`). One case needs no question: to only check on a box (its state, its jobs), use the box this computer is connected to, which `prized status --json` names as `box.name`, and say which box you took it to be. If that fails with `no config`, no box is connected here yet: `prized setup --box <name>` connects one (section 4), and until then `prized exec`, `prized prompt` and `prized agents` have no box to reach.
+With more than one box on the account, do not pick one, and do not run a command that names a box yet (no `--box <name>`, no box as an argument, not even with `--dry-run`). Which box is the user's to say, even when this computer is already connected to one, and even when the request only says "a box". First send one message and stop: the boxes that could be theirs, which of them this computer is connected to (`prized status --json` names it as `box.name`), and the offer of a new one, with the sizes, each one's rate from the pricing page, and an auto-pause window to pick. Section 4's questions can go in the same message. After their answer, name the box in every command: as the argument where a command below shows `<box>`, and as `--box <name>` everywhere else (`prized exec --box <name> --cwd ... -- ...`, `prized setup`, `prized status`).
+
+One case needs no question: to only check on a box (its state, its jobs), use the box this computer is connected to, and say which box you took it to be. If `prized status --json` fails with `no config`, no box is connected here yet: `prized setup --box <name>` connects one (section 4), and until then `prized exec`, `prized prompt` and `prized agents` have no box to reach.
 
 ## 4. Move the project onto it
 
@@ -71,7 +73,7 @@ Already deep in a conversation they want to keep? No `prized` command moves a Co
 
 When the user asks for work to go on while they're away, overnight or with the laptop closed, it has to run on the box: a `prized prompt` run, a session they open, or a detached job. Doing the work from this session with `prized exec` stops when this session does, so don't do that and call it handed off. Don't do the task here first and send the result over either: hand over the task. Codex on the box starts with none of this conversation, so write the `prized prompt` text to stand alone (what to do, in which files, how to check it), and it works on the box's copy of the project: check that copy has the commits the user means (section 4) before you start it.
 
-If Codex isn't signed in on the box (`prized agents ls --json` shows `box.signed_in` under `codex`, and `prized prompt` refuses with `CHECK_FAILED`), ask which they want: you copy this computer's sign-in (`prized agents handoff codex --box <box>`: an API-key sign-in is copied as is, and for a ChatGPT sign-in the command reports `manual` with the steps left for them), or they sign in themselves (`prized agents handoff codex` in their own terminal, which opens the sign-in page in their browser, or `prized ssh <box>`, then `codex login --device-auth`, once).
+If Codex isn't signed in on the box (`prized agents ls --json` shows `box.signed_in` under `codex`, and `prized prompt` refuses with `CHECK_FAILED`), ask which they want: you copy this computer's Codex sign-in and MCP configuration (`prized agents handoff codex --box <box>` copies both: an API-key sign-in is copied as is, and for a ChatGPT sign-in the command reports `manual` with the steps left for them), or they sign in themselves (`prized agents handoff codex` in their own terminal, which opens the sign-in page in their browser, or `prized ssh <box>`, then `codex login --device-auth`, once).
 
 `--detach` runs return at once, and closing the laptop leaves them running. `prized exec` runs what follows `--` under `sh -c` in the box's home folder, so pass a shell line as one quoted string. `prized prompt` needs Codex signed in on the box; without `--auto` it runs in Codex's `workspace-write` sandbox, which edits and runs commands in the project with no network. If `--keep-awake` is refused (an older box agent), ask, then run `prized box auto-pause <box> off` and start the job without it.
 
@@ -95,7 +97,9 @@ Read https://prized.dev/pricing.md and quote from it: each size's rate awake and
 
 ## 9. Delete, only when asked
 
-`prized box delete <box> -y --json` deletes the machine and its disk. For 7 days its last state can usually be restored, but not for a box deleted within an hour of being created or under zero data retention. Confirm the box's name with the user first.
+Do not run `prized box delete` yet. First run `prized box info <box> --json`, then send the user one message and stop: "Delete `<box>`? <its size, its state, when it was made>. The machine and its disk go, and <whether it can be restored>." Their request to delete it is not an answer to that, and neither is an approval prompt for the command: they have not seen which box that name is on this account, or whether it can come back. In the turn that asks, do not run or request `prized box delete`.
+
+After their yes, `prized box delete <box> -y --json` deletes the machine and its disk. For 7 days its last state can usually be restored, but not for a box deleted within an hour of being created or under zero data retention.
 
 ## When you finish
 

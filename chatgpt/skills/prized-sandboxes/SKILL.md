@@ -13,7 +13,7 @@ This skill runs the `prized` CLI in a shell on the user's own computer. If you h
 
 The user's explicit instructions come before the defaults here, but these hold either way, whatever the request says:
 
-- Starting the first sandbox in a conversation takes the user's yes to what it will be (section 2). Asking for a sandbox is not that yes. Sandboxes cost money.
+- Before the first `prized sandbox create` or `fork` in a conversation, ask the user and wait for their yes to what it will be (section 2), however small the job. Asking for a sandbox is not that yes, and neither is a prompt to approve the command. Sandboxes cost money.
 - Give every sandbox `--max-runtime` for the job, and delete it when the job is done, even when the job failed (`prized sandbox rm <id> -y`). For several, give them one `--label run=<name>` and delete them together with `prized sandbox rm --label run=<name> -y`.
 - Never ask the user for a password, an API key or a sign-in code, and never make an account for them. Never print, log or commit a key, never put one on a command line, and never read `~/.config/prized`. Never pass the user's own secrets (their API keys, tokens, `.env` values) into a sandbox unless they ask you to, and then ask how.
 - Act only on sandboxes you created in this conversation or the user named. `prized sandbox ls` shows every sandbox in the workspace, including other people's and their apps'.
@@ -33,10 +33,10 @@ The sign-in is shared with Prized boxes (the prized-boxes skill). A key made for
 
 ## 2. Ask, then one real run first
 
-Do not run `prized sandbox create` or `fork` yet. First send the user one message and stop: "May I start a sandbox? Template `<t>`, <the default size, or the size you will pass>, deleted after at most <time>." Don't guess the default size's numbers. Their request to run something in a sandbox is not an answer to it: they have not seen the template, the size or the time limit. Create nothing in the turn that asks. After their yes:
+Do not run `prized sandbox create` or `fork` yet, however small or quick the job. First ask the user, and end your turn on the question: "May I start a sandbox? Template `<t>`, <the default size, or the size you will pass>, deleted after at most <time>." Don't guess the default size's numbers. Their request to run something in a sandbox is not an answer to it: they have not seen the template, the size or the time limit. A note that says what you are about to create, sent while you carry on, is not asking either: wait for their reply. In the turn that asks, do not run or request `prized sandbox create` or `fork`. After their yes:
 
 ```bash
-prized sandbox create --max-runtime 30m --json      # waits until it is running; read the id (sbx_...)
+prized sandbox create --max-runtime 30m --json      # only after their yes; waits until it is running; read the id (sbx_...)
 prized sandbox exec <id> -- python3 --version       # exits with the command's exit code
 prized sandbox rm <id> -y
 ```
@@ -47,7 +47,7 @@ It prints `Python 3.12.3`. Do the user's job once this works.
 
 | What | Command |
 | --- | --- |
-| Start one | `prized sandbox create --max-runtime 1h [--template <t>] [--vcpu N] [--memory 16] [--disk 30] [--label run=<name>] --json` |
+| Start one (the first one only after the yes in section 2) | `prized sandbox create --max-runtime 1h [--template <t>] [--vcpu N] [--memory 16] [--disk 30] [--label run=<name>] --json` |
 | Run a command | `prized sandbox exec <id> [--cwd <dir>] -- '<shell line>'` (5 minute timeout by default, `--timeout 1h` at most; exit 124 on a timeout) |
 | A long job | `prized sandbox exec <id> --detach --keep-awake -- '<shell line>'` returns a process id; `--status <pid>`, `--logs <pid>`, `--follow <pid>`, `--ps`, `--kill <pid>` |
 | Copy a file in or out | `prized sandbox cp ./data.csv <id>:data.csv`, `prized sandbox cp <id>:out/report.json ./report.json` |
