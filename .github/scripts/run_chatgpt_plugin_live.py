@@ -659,7 +659,9 @@ def write_report(cfg: argparse.Namespace, results: list[dict], repeats: dict[str
         lines.append(f"| {r['scenario']} | {'pass' if r['passed'] else 'FAIL'} | {prompts} | {'; '.join(failed)} |")
     if repeats:
         lines += ["", "Ask-first steps, each in new threads:", ""]
-        lines += [f"- {name}: {sum(r['passed'] for r in rs)} of {len(rs)} asked first" for name, rs in repeats.items()]
+        lines += [f"- {name}: {sum(r['passed'] for r in rs)} of {len(rs)} asked first"
+                  + (f"; {sum(went_to_approval(r) for r in rs)} went straight to the approval prompt, which the rule refused"
+                     if any(went_to_approval(r) for r in rs) else "") for name, rs in repeats.items()]
     lines += ["", "Cleanup: " + "; ".join(notes), ""]
     for r in results + [x for rs in repeats.values() for x in rs if not x["passed"]]:
         lines += [f"## {r['label']}", ""]
@@ -760,10 +762,21 @@ def run_repeats(cfg: argparse.Namespace, approver: Approver, names: list[str]) -
         for n, job in jobs:
             out.setdefault(n, []).append(job.result())
     for n, rs in out.items():
-        print(f"  {n} x{len(rs)}: {sum(r['passed'] for r in rs)} asked first")
+        via_prompt = sum(went_to_approval(r) for r in rs)
+        print(f"  {n} x{len(rs)}: {sum(r['passed'] for r in rs)} asked first"
+              + (f", {via_prompt} went straight to the approval prompt" if via_prompt else ""))
         for r in rs:
             explain(r)
     return out
+
+
+def went_to_approval(result: dict) -> bool:
+    """A miss of one kind: Codex asked no question, but did ask to run the command, and the rule refused it.
+    In the app that request is an approval prompt the user sees; nothing was started or deleted."""
+    turn = (result["turns"] or [{}])[0]
+    refused = [a for a in turn.get("approvals", []) if not a["approved"]]
+    return (not result["passed"] and bool(refused)
+            and all(re.search(r"prized (sandbox (create|fork)|box (delete|rm|new))", a["command"]) for a in refused))
 
 
 def explain(result: dict) -> None:
