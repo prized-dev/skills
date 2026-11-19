@@ -40,6 +40,7 @@ python3 .github/scripts/run_chatgpt_plugin_live.py --refresh --repeat 5
 - `--repeat 5` also runs each step that should end in a question five times in new threads. `--ask-first-only` runs just those, `--only sandbox,delete` runs some of the prompts, and `--ask "a prompt of your own"` checks that a prompt the skills have not seen also ends in a question.
 - It makes one Nano box and at most eight short sandboxes, and at the end deletes them and this computer's connection to the box.
 - It stays off every other box. Codex runs in its sandbox, where `prized` has no network, so each `prized` command reaches the script as an approval prompt first, and the rule approves only reads and commands that name the test box. The run checks this before it starts and stops if `prized` works inside the sandbox. The rule's cases are in `test_run_chatgpt_plugin_live.py`.
+- For a sandbox, asking to run the create counts as asking: the app shows that as an approval prompt with the command, and nothing starts until the user approves. The summary says how many asked that way. For creating or deleting a box, only a question in a message counts.
 - In a container, where Codex's sandbox cannot start, add `--sandbox danger-full-access --approval untrusted`.
 
 It does not cover the app's own screens (installing from the Plugins Directory, the listing, what an approval prompt looks like), or the hand-off past its questions (copying the sign-in and the detached run). Check those by hand.
