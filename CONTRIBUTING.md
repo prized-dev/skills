@@ -30,6 +30,12 @@ CI runs the same checks. Never commit a key, a `.env` file or a token.
 python3 .github/scripts/check_chatgpt_plugin.py chatgpt --zip prized-chatgpt.zip
 ```
 
+Before a release, run its prompts through Codex itself ([what this does](chatgpt/README.md#run-the-prompts-with-no-window)). It uses a real box and real sandboxes, so it is not part of CI:
+
+```sh
+python3 .github/scripts/run_chatgpt_plugin_live.py --refresh --repeat 5
+```
+
 ## Security
 
 Report a vulnerability to team@prized.dev rather than in a public issue.

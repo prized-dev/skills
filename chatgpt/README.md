@@ -28,6 +28,22 @@ python3 .github/scripts/check_chatgpt_plugin.py chatgpt --zip prized-chatgpt.zip
 
 The script applies the package rules in OpenAI's [submission errors reference](https://developers.openai.com/plugins/deploy/submission-errors) and the Agent Plugins schema; CI runs it on every pull request. Upload the ZIP at [platform.openai.com/plugins](https://platform.openai.com/plugins) under **Skills only**.
 
+## Run the prompts with no window
+
+[`.github/scripts/run_chatgpt_plugin_live.py`](../.github/scripts/run_chatgpt_plugin_live.py) runs the list below by itself. It drives `codex app-server`, the engine the ChatGPT desktop app runs its threads on, and plays the user: it sends each prompt, answers every approval prompt by a fixed rule, sends the scripted replies, and checks what Codex ran and what it asked. Run it on the computer whose Codex has the plugin; where no `codex` is on the PATH it uses the one inside the ChatGPT app.
+
+```bash
+python3 .github/scripts/run_chatgpt_plugin_live.py --refresh --repeat 5
+```
+
+- A full pass takes about five minutes (seven with `--repeat 3`) and writes `report.md` and the whole transcript to `~/prized-plugin-live-test-report/`. `--refresh` pulls this plugin's latest commit first.
+- `--repeat 5` also runs each step that should end in a question five times in new threads. `--ask-first-only` runs just those, and `--only sandbox,delete` runs some of the prompts.
+- It makes one Nano box and at most eight short sandboxes, and at the end deletes them and this computer's connection to the box.
+- It stays off every other box. Codex runs in its sandbox, where `prized` has no network, so each `prized` command reaches the script as an approval prompt first, and the rule approves only reads and commands that name the test box. The run checks this before it starts and stops if `prized` works inside the sandbox. The rule's cases are in `test_run_chatgpt_plugin_live.py`.
+- In a container, where Codex's sandbox cannot start, add `--sandbox danger-full-access --approval untrusted`.
+
+It does not cover the app's own screens (installing from the Plugins Directory, the listing, what an approval prompt looks like), or the hand-off past its questions (copying the sign-in and the detached run). Check those by hand.
+
 ## Try these before a release
 
 Run them in a small project with tests, with the plugin installed, next to the Claude Code plugin on the same prompts: the two should ask the same things and run the same commands. A test box costs money while it is awake: delete it when you are done. Some prompts say only "my Prized box", so on an account with boxes that matter, approve each command by hand, or put a wrapper in front of `prized` that refuses any box but the test one. Run each prompt that should end in a question several times in new threads, at the highest reasoning setting too: those are the steps that drift, and one that holds four times in five is failing.
